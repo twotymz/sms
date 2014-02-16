@@ -1,4 +1,4 @@
 sms
 ===
 
-My SMS emuluator.
+My SMS emulator.
