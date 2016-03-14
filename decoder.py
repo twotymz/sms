@@ -1,5 +1,7 @@
 
+import getopt
 import sms
+import sys
 
 table_r = [
     'B',
@@ -77,28 +79,234 @@ table_bli = [
     ['LDDR', 'CPDR', 'INDR', 'OTDR']
 ]
 
-# Decodes the next instruction.
-#
-# Args
-#   'pc' - where to start reading in 'sms.rom'.
-# Returns
-#   the number of bytes read.
+
+def _ddcb_prefix (pc) :
+
+    opcode = sms.rom[pc]
+    c = 1
+
+    x = (opcode & 0xC0) >> 6
+    y = (opcode & 0x38) >> 3
+    z = (opcode & 0x7)
+    p = y >> 1
+    q = y & 0x1
+
+    instruction = None
+
+    if x == 0 :
+        if z != 6 :
+            displacement = sms.rom[pc+c]
+            c+= 1
+            instruction = 'LD {0}, {1} (IX+{2})'.format (table_r[z], table_rot[y], displacement)
+        else :
+            displacement = sms.rom[pc+c]
+            c+= 1
+            instruction = '{0} (IX+{1})'.format (table_rot[y], displacement)
+
+    elif x == 1 :
+        instruction = 'BIT {0}, {1}'.format (y, table_r[z])
+
+    elif x == 2 :
+        if z != 6 :
+            displacement = sms.rom[pc+c]
+            c+= 1
+            instruction = 'LD {0}, RES {1}, (IX+{2})'.format (table_r[z], y, displacement)
+        else :
+            displacement = sms.rom[pc+c]
+            c+= 1
+            instruction = 'RES {0}, (IX+{1})'.format (y, displacement)
+
+    elif x == 3 :
+        if z != 6 :
+            displacement = sms.rom[pc+c]
+            c+= 1
+            instruction = 'LD {0}, SET {1}, (IX+{2})'.format (table_r[z], y, displacement)
+        else :
+            displacement = sms.rom[pc+c]
+            c+= 1
+            instruction = 'SET {0}, (IX+{1})'.format (y, displacement)
+
+    return c, instruction
+
+
+def _fdcb_prefix (pc) :
+
+    opcode = sms.rom[pc]
+    c = 1
+
+    x = (opcode & 0xC0) >> 6
+    y = (opcode & 0x38) >> 3
+    z = (opcode & 0x7)
+    p = y >> 1
+    q = y & 0x1
+
+    instruction = None
+
+    if x == 0 :
+        if z != 6 :
+            displacement = sms.rom[pc+c]
+            c+= 1
+            instruction = 'LD {0}, {1} (IY+{2})'.format (table_r[z], table_rot[y], displacement)
+        else :
+            displacement = sms.rom[pc+c]
+            c+= 1
+            instruction = '{0} (IY+{1})'.format (table_rot[y], displacement)
+
+    elif x == 1 :
+        instruction = 'BIT {0}, {1}'.format (y, table_r[z])
+
+    elif x == 2 :
+        if z != 6 :
+            displacement = sms.rom[pc+c]
+            c+= 1
+            instruction = 'LD {0}, RES {1}, (IY+{2})'.format (table_r[z], y, displacement)
+        else :
+            displacement = sms.rom[pc+c]
+            c+= 1
+            instruction = 'RES {0}, (IY+{1})'.format (y, displacement)
+
+    elif x == 3 :
+        if z != 6 :
+            displacement = sms.rom[pc+c]
+            c+= 1
+            instruction = 'LD {0}, SET {1}, (IY+{2})'.format (table_r[z], y, displacement)
+        else :
+            displacement = sms.rom[pc+c]
+            c+= 1
+            instruction = 'SET {0}, (IY+{1})'.format (y, displacement)
+
+    return c, instruction
+
+
+def _cb_prefix (pc) :
+
+    opcode = sms.rom[pc]
+    c = 1
+
+    x = (opcode & 0xC0) >> 6
+    y = (opcode & 0x38) >> 3
+    z = (opcode & 0x7)
+    p = y >> 1
+    q = y & 0x1
+
+    instruction = None
+
+    if x == 0 :
+        instruction = '{0} {1}'.format (table_rot[y], table_r[z])
+    elif x == 1 :
+        instruction = 'BIT {0}, {1}'.format (y, table_r[z])
+    elif x == 2 :
+        instruction = 'RES {0}, {1}'.format (y, table_r[z])
+    elif x == 3 :
+        instruction = 'SET {0}, {1}'.format (y, table_r[z])
+
+    return c, instruction
+
+
+def _dd_prefix (pc) :
+
+    c = 1
+    instruction = None
+
+    if sms.rom[pc+c] in (0xDD, 0xED, 0xFD) :
+        instruction = 'NONI'
+    elif sms.rom[pc+c] == 0xCB :
+        d, instruction = _ddcb_prefix (pc+c)
+        c += d
+    else :
+        d, instruction = decode (pc + c)
+        c += d
+
+    return c, instruction
+
+
+def _ed_prefix (pc) :
+
+    opcode = sms.rom[pc]
+    c = 1
+
+    x = (opcode & 0xC0) >> 6
+    y = (opcode & 0x38) >> 3
+    z = (opcode & 0x7)
+    p = y >> 1
+    q = y & 0x1
+
+    instruction = None
+
+    if x == 1 :
+        if z == 0 :
+            if y != 6 :
+                instruction = 'IN {0}, (C)'.format (table_r[y])
+            else :
+                instruction = 'IN (C)'
+        elif z == 1 :
+            if y != 6 :
+                instruction = 'OUT {0}, (C)'.format (table_r[y])
+            else :
+                instruction = 'OUT (C), 0'
+        elif z == 2 :
+            if q == 0 :
+                instruction = 'SBC HL, {0}'.format (table_rp[p])
+            elif q == 1 :
+                instruction = 'ADC HL, {0}'.format (table_rp[p])
+        elif z == 3 :
+            if q == 0 :
+                immediate = sms.rom[pc + c] | sms.rom[pc + c + 1] << 8
+                c += 2
+                instruction = 'LD (0x{0:02X}), {1}'.format (immediate, table_rp[p])
+            elif q == 1 :
+                immediate = sms.rom[pc + c] | sms.rom[pc + c + 1] << 8
+                c += 2
+                instruction = 'LD {0}, (0x{1:02X})'.format (table_rp[p], immediate)
+        elif z == 4 :
+            instruction = 'NEG'
+        elif z == 5 :
+            if y != 1 :
+                instruction = 'RETN'
+            else :
+                instruction = 'RETI'
+        elif z == 6 :
+            instruction = 'IM {0}'.format (table_im[y])
+        elif z == 7 :
+            instruction = ['LD I, A', 'LD R, A', 'LD A, I', 'LD A, R', 'RRD', 'RLD', 'NOP', 'NOP'][y]
+
+    elif x == 2 :
+        if z <= 3 :
+            if y >= 4 :
+                instruction = table_bli[y-4][z]
+
+    else :
+        instruction = 'NONI NOP'
+        c+=1
+
+    return c, instruction
+
+
+def _fd_prefix (pc) :
+
+    c = 1
+    instruction = None
+
+    if sms.rom[pc+c] in (0xDD, 0xED, 0xFD) :
+        instruction = 'NONI'
+    elif sms.rom[pc+c] == 0xCB :
+        d, instruction = _fdcb_prefix (pc+c)
+        c += d
+    else :
+        d, instruction = decode (pc + c)
+        c += d
+
+    return c, instruction
+
+
+# Decodes the instruction at 'pc'.
+# Implement the alogrithm found here: http://www.z80.info/decoding.htm
+# Returns the number of bytes read.
 def decode (pc) :
 
-    # instructions are stored in this format:
-    # [prefix] opcode [displacement] [immediate data]
-
-    prefix = None
-    c = 0
-
-    # Test for the prefix byte.
-    if sms.rom[pc] in (0xCB, 0xDD, 0xED, 0xFD) :
-        prefix = sms.rom[pc]
-        c += 1
-
     # Get the opcode.
-    opcode = sms.rom[pc+c]
-    c += 1
+    opcode = sms.rom[pc]
+    c = 1
 
     x = (opcode & 0xC0) >> 6
     y = (opcode & 0x38) >> 3
@@ -129,9 +337,9 @@ def decode (pc) :
 
         elif z == 1 :
             if q == 0 :
-                immediate = sms.rom[pc + c] << 8 | sms.rom[pc + c + 1]
+                immediate = sms.rom[pc + c] | sms.rom[pc + c + 1] << 8
                 c += 2
-                instruction = 'LD {0}, 0x{1:02X}'.format (table_rp[p], immediate)
+                instruction = 'LD {0}, 0x{1:04X}'.format (table_rp[p], immediate)
             elif q == 1 :
                 instruction = 'ADD HL, {0}'.format (table_rp[p])
 
@@ -142,13 +350,13 @@ def decode (pc) :
                 elif p == 1 :
                     instruction = 'LD (DE), A'
                 elif p == 2 :
-                    immediate = sms.rom[pc + c] << 8 | sms.rom[pc + c + 1]
+                    immediate = sms.rom[pc + c] | sms.rom[pc + c + 1] << 8
                     c += 2
-                    instruction = 'LD (0x{0:02X}), HL'.format (immediate)
+                    instruction = 'LD (0x{0:04X}), HL'.format (immediate)
                 elif p == 3 :
-                    immediate = sms.rom[pc + c] << 8 | sms.rom[pc + c + 1]
+                    immediate = sms.rom[pc + c] | sms.rom[pc + c + 1] << 8
                     c += 2
-                    instruction = 'LD (0x{0:02X}), A'.format (immediate)
+                    instruction = 'LD (0x{0:04X}), A'.format (immediate)
 
             elif q == 1 :
                 if p == 0 :
@@ -156,13 +364,13 @@ def decode (pc) :
                 elif p == 1 :
                     instruction = 'LD A, (DE)'
                 elif p == 2 :
-                    immediate = sms.rom[pc + c] << 8 | sms.rom[pc + c + 1]
+                    immediate = sms.rom[pc + c] | sms.rom[pc + c + 1] << 8
                     c += 2
-                    instruction = 'LD HL, (0x{0:02X})'.format (immediate)
+                    instruction = 'LD HL, (0x{0:04X})'.format (immediate)
                 elif p == 3 :
-                    immediate = sms.rom[pc + c] << 8 | sms.rom[pc + c + 1]
+                    immediate = sms.rom[pc + c] | sms.rom[pc + c + 1] << 8
                     c += 2
-                    instruction = 'LD A, (0x{0:02X})'.format (immediate)
+                    instruction = 'LD A, (0x{0:04X})'.format (immediate)
 
         elif z == 3 :
             if q == 0 :
@@ -185,9 +393,8 @@ def decode (pc) :
             instruction = ['RLCA', 'RRCA', 'RLA', 'RRA', 'DAA', 'CPL', 'SCF', 'CCF'][y]
 
     elif x == 1 :
-        if z == 7 :
-            if y == 6 :
-                instruction = 'HALT'
+        if z == 7 and y == 6 :
+            instruction = 'HALT'
         else :
             instruction = 'LD {0}, {1}'.format (table_r[y], table_r[z])
 
@@ -203,16 +410,17 @@ def decode (pc) :
             elif q == 1 :
                 instruction = ['RET', 'EXX', 'JP HL', 'LD SP, HL'][p]
         elif z == 2 :
-            immediate = sms.rom[pc + c] << 8 | sms.rom[pc + c + 1]
+            immediate = sms.rom[pc + c] | sms.rom[pc + c + 1] << 8
             c += 2
-            instruction = 'JP {0}, 0x{1:02X}'.format (table_cc[y], immediate)
+            instruction = 'JP {0}, 0x{1:04X}'.format (table_cc[y], immediate)
         elif z == 3 :
             if y == 0 :
-                immediate = sms.rom[pc + c] << 8 | sms.rom[pc + c + 1]
+                immediate = sms.rom[pc + c] | sms.rom[pc + c + 1] << 8
                 c += 2
-                instruction = 'JP 0x{0:02X}'.format (immediate)
+                instruction = 'JP 0x{0:04X}'.format (immediate)
             elif y == 1 :
-                pass
+                d, instruction = _cb_prefix (pc + c)
+                c += d
             elif y == 2 :
                 immediate = sms.rom[pc+c]
                 c += 1
@@ -226,21 +434,25 @@ def decode (pc) :
         elif z == 4 :
             immediate = sms.rom[pc + c] << 8 | sms.rom[pc + c + 1]
             c += 2
-            instruction = 'CALL {0}, 0x{1:02X}'.format (table_cc[y], immediate)
+            instruction = 'CALL {0}, 0x{1:04X}'.format (table_cc[y], immediate)
         elif z == 5 :
             if q == 0 :
                 instruction = 'PUSH {0}'.format (table_rp2[p])
             elif q == 1 :
                 if p == 0 :
-                    immediate = sms.rom[pc + c] << 8 | sms.rom[pc + c + 1]
+                    immediate = sms.rom[pc + c] | sms.rom[pc + c + 1] << 8
                     c += 2
-                    instruction = 'CALL 0x{0:02X}'.format (immediate)
+                    instruction = 'CALL 0x{0:04X}'.format (immediate)
                 elif p == 1 :
-                    pass
+                    d, instruction = _dd_prefix (pc + c)
+                    c += d
                 elif p == 2 :
-                    pass
+                    d, instruction = _ed_prefix (pc + c)
+                    c += d
                 elif p == 3 :
-                    pass
+                    d, instruction = _fd_prefix (pc + c)
+                    c += d
+
         elif z == 6 :
             immediate = sms.rom[pc+c]
             c += 1
@@ -248,19 +460,48 @@ def decode (pc) :
         elif z == 7 :
             instruction = 'RST {0}'.format (y * 8)
 
-    assert instruction is not None
-
-    print '0x{8:08X} {0} 0x{1:02X} x={2}, y={3}, z={4}, p={5}, q={6} ({7} bytes read)'.format (instruction, opcode, x, y, z, p, q, c, pc)
-    return c
+    return c, instruction
 
 
 # Application entry point.
 if __name__ == '__main__' :
 
-    sms.readRom ('rom.sms')
+    pc = 0
+
+    opts, args = getopt.getopt (sys.argv[1:], 'o:')
+    for o, a in opts :
+        if o == '-o' :
+            pc = int (a)
+
+    if len (args) == 0 :
+        print 'Usage: decoder.py [-o offset] <file>'
+        exit (1)
+
+    sms.readRom (args[0])
     if sms.rom is None :
         exit (1)
 
-    pc = 0
     while pc < len (sms.rom) :
-        pc += decode (pc)
+
+        c, instruction = decode (pc)
+
+        if instruction is None :
+
+            print 'Undecoded instruction at {0:08X}. Dumping memory...'.format (pc)
+
+            for l in xrange (-1, 2) :
+
+                buf = ''
+                for x in range (16) :
+                    buf += ' {0:02X}'.format (sms.rom[pc + (l * 16) + x])
+
+                print '{0:08X}{1} '.format (pc + l * 16, buf)
+
+            exit (2)
+
+        opcode = ''
+        for x in range (c) :
+            opcode += '{0:02X}'.format (sms.rom[pc+x])
+
+        print '{0:08X}\t{1}\t{2}'.format (pc, opcode, instruction.lower ())
+        pc += c

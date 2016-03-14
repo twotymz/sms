@@ -1,4 +1,4 @@
 apt-get update
-apt-get install python-dev
-apt-get install python-pip
+apt-get install -y python-dev
+apt-get install -y python-pip
 pip install numpy
