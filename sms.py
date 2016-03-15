@@ -3,11 +3,11 @@ import sys
 import os
 import getopt
 import numpy
-import pprint
 
 rom = None
 header = {}
 
+# Read the ROM header and save it somewhere useful.
 def _read_header () :
 
     global rom
@@ -22,7 +22,8 @@ def _read_header () :
     header['size'] = rom[0x7FFF] & 0xF
 
 
-def readRom (path) :
+# Load the rom at 'path' in to memory. Returns success.
+def loadRom (path) :
 
     global rom
     rom = None
@@ -38,6 +39,9 @@ def readRom (path) :
 
         rom = numpy.fromfile (f, dtype=numpy.uint8)
         _read_header ()
+        return True
+
+    return False
 
 
 ##
@@ -50,8 +54,5 @@ if __name__ == '__main__' :
         print 'Usage: sms.py rom'
         sys.exit (2)
 
-    readRom (args[0])
-    if rom is None :
+    if not loadRom (args[0]) :
         exit (2)
-
-    pprint.pprint (header)

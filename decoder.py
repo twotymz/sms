@@ -275,10 +275,6 @@ def _ed_prefix (pc) :
             if y >= 4 :
                 instruction = table_bli[y-4][z]
 
-    else :
-        instruction = 'NONI NOP'
-        c+=1
-
     return c, instruction
 
 
@@ -477,8 +473,7 @@ if __name__ == '__main__' :
         print 'Usage: decoder.py [-o offset] <file>'
         exit (1)
 
-    sms.readRom (args[0])
-    if sms.rom is None :
+    if not sms.loadRom (args[0]) :
         exit (1)
 
     while pc < len (sms.rom) :
