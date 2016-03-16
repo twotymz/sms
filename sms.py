@@ -3,14 +3,16 @@ import sys
 import os
 import getopt
 import numpy
+import memory
 
 rom = None
+mapper = memory.Mapper ()
 header = {}
 
 # Read the ROM header and save it somewhere useful.
 def _read_header () :
 
-    global rom
+    global mapper
     global header
 
     header['raw'] = ''.join (['{0:02X} '.format (r) for r in rom[0x7FF0:0x8000]])
@@ -38,6 +40,7 @@ def loadRom (path) :
             file_size -= 512
 
         rom = numpy.fromfile (f, dtype=numpy.uint8)
+        mapper.initalize (rom)
         _read_header ()
         return True
 
@@ -56,3 +59,9 @@ if __name__ == '__main__' :
 
     if not loadRom (args[0]) :
         exit (2)
+
+    print 'Checksum: {0:4X}'.format (header['checksum'])
+    print 'Product Code: {0:X}'.format (header['product_code'])
+    print 'Version: {0:X}'.format (header['version'])
+    print 'Region: {0:X}'.format (header['region'])
+    print 'Size: {0:X}'.format (header['size'])

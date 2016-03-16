@@ -16,7 +16,6 @@ if __name__ == '__main__' :
 
     pc = 0
     while pc < len (sms.rom) :
-
         c, mnemonic, displacement, immediate = decode.decode (pc)
-        print pc, mnemonic, displacement, immediate
+        print '{0:04X}\t{1}'.format (pc, mnemonic)
         pc += c

@@ -82,7 +82,7 @@ table_bli = [
 
 def _ddcb_prefix (pc) :
 
-    opcode = sms.rom[pc]
+    opcode = sms.mapper.ram[pc]
 
     c = 1
     instruction = None
@@ -97,11 +97,11 @@ def _ddcb_prefix (pc) :
 
     if x == 0 :
         if z != 6 :
-            displacement = sms.rom[pc+c]
+            displacement = sms.mapper.ram[pc+c]
             c+= 1
             instruction = 'LD {0}, {1} (IX+{2})'.format (table_r[z], table_rot[y], displacement)
         else :
-            displacement = sms.rom[pc+c]
+            displacement = sms.mapper.ram[pc+c]
             c+= 1
             instruction = '{0} (IX+{1})'.format (table_rot[y], displacement)
 
@@ -110,21 +110,21 @@ def _ddcb_prefix (pc) :
 
     elif x == 2 :
         if z != 6 :
-            displacement = sms.rom[pc+c]
+            displacement = sms.mapper.ram[pc+c]
             c+= 1
             instruction = 'LD {0}, RES {1}, (IX+{2})'.format (table_r[z], y, displacement)
         else :
-            displacement = sms.rom[pc+c]
+            displacement = sms.mapper.ram[pc+c]
             c+= 1
             instruction = 'RES {0}, (IX+{1})'.format (y, displacement)
 
     elif x == 3 :
         if z != 6 :
-            displacement = sms.rom[pc+c]
+            displacement = sms.mapper.ram[pc+c]
             c+= 1
             instruction = 'LD {0}, SET {1}, (IX+{2})'.format (table_r[z], y, displacement)
         else :
-            displacement = sms.rom[pc+c]
+            displacement = sms.mapper.ram[pc+c]
             c+= 1
             instruction = 'SET {0}, (IX+{1})'.format (y, displacement)
 
@@ -133,7 +133,7 @@ def _ddcb_prefix (pc) :
 
 def _fdcb_prefix (pc) :
 
-    opcode = sms.rom[pc]
+    opcode = sms.mapper.ram[pc]
 
     c = 1
     instruction = None
@@ -148,11 +148,11 @@ def _fdcb_prefix (pc) :
 
     if x == 0 :
         if z != 6 :
-            displacement = sms.rom[pc+c]
+            displacement = sms.mapper.ram[pc+c]
             c+= 1
             instruction = 'LD {0}, {1} (IY+{2})'.format (table_r[z], table_rot[y], displacement)
         else :
-            displacement = sms.rom[pc+c]
+            displacement = sms.mapper.ram[pc+c]
             c+= 1
             instruction = '{0} (IY+{1})'.format (table_rot[y], displacement)
 
@@ -161,21 +161,21 @@ def _fdcb_prefix (pc) :
 
     elif x == 2 :
         if z != 6 :
-            displacement = sms.rom[pc+c]
+            displacement = sms.mapper.ram[pc+c]
             c+= 1
             instruction = 'LD {0}, RES {1}, (IY+{2})'.format (table_r[z], y, displacement)
         else :
-            displacement = sms.rom[pc+c]
+            displacement = sms.mapper.ram[pc+c]
             c+= 1
             instruction = 'RES {0}, (IY+{1})'.format (y, displacement)
 
     elif x == 3 :
         if z != 6 :
-            displacement = sms.rom[pc+c]
+            displacement = sms.mapper.ram[pc+c]
             c+= 1
             instruction = 'LD {0}, SET {1}, (IY+{2})'.format (table_r[z], y, displacement)
         else :
-            displacement = sms.rom[pc+c]
+            displacement = sms.mapper.ram[pc+c]
             c+= 1
             instruction = 'SET {0}, (IY+{1})'.format (y, displacement)
 
@@ -184,7 +184,7 @@ def _fdcb_prefix (pc) :
 
 def _cb_prefix (pc) :
 
-    opcode = sms.rom[pc]
+    opcode = sms.mapper.ram[pc]
 
     c = 1
     instruction = None
@@ -216,9 +216,9 @@ def _dd_prefix (pc) :
     displacement = None
     immediate = None
 
-    if sms.rom[pc+c] in (0xDD, 0xED, 0xFD) :
+    if sms.mapper.ram[pc+c] in (0xDD, 0xED, 0xFD) :
         instruction = 'NOP'
-    elif sms.rom[pc+c] == 0xCB :
+    elif sms.mapper.ram[pc+c] == 0xCB :
         d, instruction, displacement, immediate = _ddcb_prefix (pc+c)
         c += d
     else :
@@ -230,7 +230,7 @@ def _dd_prefix (pc) :
 
 def _ed_prefix (pc) :
 
-    opcode = sms.rom[pc]
+    opcode = sms.mapper.ram[pc]
 
     c = 1
     instruction = None
@@ -261,11 +261,11 @@ def _ed_prefix (pc) :
                 instruction = 'ADC HL, {0}'.format (table_rp[p])
         elif z == 3 :
             if q == 0 :
-                immediate = sms.rom[pc + c] | sms.rom[pc + c + 1] << 8
+                immediate = sms.mapper.ram[pc + c] | sms.mapper.ram[pc + c + 1] << 8
                 c += 2
                 instruction = 'LD (0x{0:02X}), {1}'.format (immediate, table_rp[p])
             elif q == 1 :
-                immediate = sms.rom[pc + c] | sms.rom[pc + c + 1] << 8
+                immediate = sms.mapper.ram[pc + c] | sms.mapper.ram[pc + c + 1] << 8
                 c += 2
                 instruction = 'LD {0}, (0x{1:02X})'.format (table_rp[p], immediate)
         elif z == 4 :
@@ -295,9 +295,9 @@ def _fd_prefix (pc) :
     displacement = None
     immediate = None
 
-    if sms.rom[pc+c] in (0xDD, 0xED, 0xFD) :
+    if sms.mapper.ram[pc+c] in (0xDD, 0xED, 0xFD) :
         instruction = 'NOP'
-    elif sms.rom[pc+c] == 0xCB :
+    elif sms.mapper.ram[pc+c] == 0xCB :
         d, instruction, displacement, immediate = _fdcb_prefix (pc+c)
         c += d
     else :
@@ -313,7 +313,7 @@ def _fd_prefix (pc) :
 def decode (pc) :
 
     # Get the opcode.
-    opcode = sms.rom[pc]
+    opcode = sms.mapper.ram[pc]
 
     x = (opcode & 0xC0) >> 6
     y = (opcode & 0x38) >> 3
@@ -333,21 +333,21 @@ def decode (pc) :
             elif y == 1 :
                 instruction = "EX AF, AF'"
             elif y == 2 :
-                displacement = sms.rom[pc+c]
+                displacement = sms.mapper.ram[pc+c]
                 c += 1
                 instruction = 'DJNZ {0}'.format (displacement)
             elif y == 3 :
-                displacement = sms.rom[pc+c]
+                displacement = sms.mapper.ram[pc+c]
                 c += 1
                 instruction = 'JR {0}'.format (displacement)
             elif y in (4, 5, 6, 7) :
-                displacement = sms.rom[pc+c]
+                displacement = sms.mapper.ram[pc+c]
                 c += 1
                 instruction = 'JR {0}, {1}'.format (table_cc[y-4], displacement)
 
         elif z == 1 :
             if q == 0 :
-                immediate = sms.rom[pc + c] | sms.rom[pc + c + 1] << 8
+                immediate = sms.mapper.ram[pc + c] | sms.mapper.ram[pc + c + 1] << 8
                 c += 2
                 instruction = 'LD {0}, 0x{1:04X}'.format (table_rp[p], immediate)
             elif q == 1 :
@@ -360,11 +360,11 @@ def decode (pc) :
                 elif p == 1 :
                     instruction = 'LD (DE), A'
                 elif p == 2 :
-                    immediate = sms.rom[pc + c] | sms.rom[pc + c + 1] << 8
+                    immediate = sms.mapper.ram[pc + c] | sms.mapper.ram[pc + c + 1] << 8
                     c += 2
                     instruction = 'LD (0x{0:04X}), HL'.format (immediate)
                 elif p == 3 :
-                    immediate = sms.rom[pc + c] | sms.rom[pc + c + 1] << 8
+                    immediate = sms.mapper.ram[pc + c] | sms.mapper.ram[pc + c + 1] << 8
                     c += 2
                     instruction = 'LD (0x{0:04X}), A'.format (immediate)
 
@@ -374,11 +374,11 @@ def decode (pc) :
                 elif p == 1 :
                     instruction = 'LD A, (DE)'
                 elif p == 2 :
-                    immediate = sms.rom[pc + c] | sms.rom[pc + c + 1] << 8
+                    immediate = sms.mapper.ram[pc + c] | sms.mapper.ram[pc + c + 1] << 8
                     c += 2
                     instruction = 'LD HL, (0x{0:04X})'.format (immediate)
                 elif p == 3 :
-                    immediate = sms.rom[pc + c] | sms.rom[pc + c + 1] << 8
+                    immediate = sms.mapper.ram[pc + c] | sms.mapper.ram[pc + c + 1] << 8
                     c += 2
                     instruction = 'LD A, (0x{0:04X})'.format (immediate)
 
@@ -395,7 +395,7 @@ def decode (pc) :
             instruction = 'DEC {0}'.format (table_r[y])
 
         elif z == 6 :
-            immediate = sms.rom[pc+c]
+            immediate = sms.mapper.ram[pc+c]
             c += 1
             instruction = 'LD {0}, 0x{1:02X}'.format (table_r[y], immediate)
 
@@ -420,29 +420,29 @@ def decode (pc) :
             elif q == 1 :
                 instruction = ['RET', 'EXX', 'JP HL', 'LD SP, HL'][p]
         elif z == 2 :
-            immediate = sms.rom[pc + c] | sms.rom[pc + c + 1] << 8
+            immediate = sms.mapper.ram[pc + c] | sms.mapper.ram[pc + c + 1] << 8
             c += 2
             instruction = 'JP {0}, 0x{1:04X}'.format (table_cc[y], immediate)
         elif z == 3 :
             if y == 0 :
-                immediate = sms.rom[pc + c] | sms.rom[pc + c + 1] << 8
+                immediate = sms.mapper.ram[pc + c] | sms.mapper.ram[pc + c + 1] << 8
                 c += 2
                 instruction = 'JP 0x{0:04X}'.format (immediate)
             elif y == 1 :
                 d, instruction, displacement, immediate = _cb_prefix (pc + c)
                 c += d
             elif y == 2 :
-                immediate = sms.rom[pc+c]
+                immediate = sms.mapper.ram[pc+c]
                 c += 1
                 instruction = 'OUT (0x{0:02X}), A'.format (immediate)
             elif y == 3 :
-                immediate = sms.rom[pc+c]
+                immediate = sms.mapper.ram[pc+c]
                 c += 1
                 instruction = 'IN A, (0x{0:02X})'.format (immediate)
             elif y in (4, 5, 6, 7) :
                 instruction = ['EX (SP), HL', 'EX DE, HL', 'DI', 'EI'][y-4]
         elif z == 4 :
-            immediate = sms.rom[pc + c] << 8 | sms.rom[pc + c + 1]
+            immediate = sms.mapper.ram[pc + c] << 8 | sms.mapper.ram[pc + c + 1]
             c += 2
             instruction = 'CALL {0}, 0x{1:04X}'.format (table_cc[y], immediate)
         elif z == 5 :
@@ -450,7 +450,7 @@ def decode (pc) :
                 instruction = 'PUSH {0}'.format (table_rp2[p])
             elif q == 1 :
                 if p == 0 :
-                    immediate = sms.rom[pc + c] | sms.rom[pc + c + 1] << 8
+                    immediate = sms.mapper.ram[pc + c] | sms.mapper.ram[pc + c + 1] << 8
                     c += 2
                     instruction = 'CALL 0x{0:04X}'.format (immediate)
                 elif p == 1 :
@@ -464,7 +464,7 @@ def decode (pc) :
                     c += d
 
         elif z == 6 :
-            immediate = sms.rom[pc+c]
+            immediate = sms.mapper.ram[pc+c]
             c += 1
             instruction = '{0} 0x{1:02X}'.format (table_alu[y], immediate)
         elif z == 7 :
