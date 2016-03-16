@@ -83,15 +83,17 @@ table_bli = [
 def _ddcb_prefix (pc) :
 
     opcode = sms.rom[pc]
+
     c = 1
+    instruction = None
+    immediate = None
+    displacement = None
 
     x = (opcode & 0xC0) >> 6
     y = (opcode & 0x38) >> 3
     z = (opcode & 0x7)
     p = y >> 1
     q = y & 0x1
-
-    instruction = None
 
     if x == 0 :
         if z != 6 :
@@ -126,21 +128,23 @@ def _ddcb_prefix (pc) :
             c+= 1
             instruction = 'SET {0}, (IX+{1})'.format (y, displacement)
 
-    return c, instruction
+    return c, instruction, displacement, immediate
 
 
 def _fdcb_prefix (pc) :
 
     opcode = sms.rom[pc]
+
     c = 1
+    instruction = None
+    immediate = None
+    displacement = None
 
     x = (opcode & 0xC0) >> 6
     y = (opcode & 0x38) >> 3
     z = (opcode & 0x7)
     p = y >> 1
     q = y & 0x1
-
-    instruction = None
 
     if x == 0 :
         if z != 6 :
@@ -175,21 +179,23 @@ def _fdcb_prefix (pc) :
             c+= 1
             instruction = 'SET {0}, (IY+{1})'.format (y, displacement)
 
-    return c, instruction
+    return c, instruction, displacement, immediate
 
 
 def _cb_prefix (pc) :
 
     opcode = sms.rom[pc]
+
     c = 1
+    instruction = None
+    displacement = None
+    immediate = None
 
     x = (opcode & 0xC0) >> 6
     y = (opcode & 0x38) >> 3
     z = (opcode & 0x7)
     p = y >> 1
     q = y & 0x1
-
-    instruction = None
 
     if x == 0 :
         instruction = '{0} {1}'.format (table_rot[y], table_r[z])
@@ -200,38 +206,42 @@ def _cb_prefix (pc) :
     elif x == 3 :
         instruction = 'SET {0}, {1}'.format (y, table_r[z])
 
-    return c, instruction
+    return c, instruction, displacement, immediate
 
 
 def _dd_prefix (pc) :
 
     c = 1
     instruction = None
+    displacement = None
+    immediate = None
 
     if sms.rom[pc+c] in (0xDD, 0xED, 0xFD) :
-        instruction = 'NONI'
+        instruction = 'NOP'
     elif sms.rom[pc+c] == 0xCB :
-        d, instruction = _ddcb_prefix (pc+c)
+        d, instruction, displacement, immediate = _ddcb_prefix (pc+c)
         c += d
     else :
-        d, instruction = decode (pc + c)
+        d, instruction, displacement, immediate = decode (pc + c)
         c += d
 
-    return c, instruction
+    return c, instruction, displacement, immediate
 
 
 def _ed_prefix (pc) :
 
     opcode = sms.rom[pc]
+
     c = 1
+    instruction = None
+    displacement = None
+    immediate = None
 
     x = (opcode & 0xC0) >> 6
     y = (opcode & 0x38) >> 3
     z = (opcode & 0x7)
     p = y >> 1
     q = y & 0x1
-
-    instruction = None
 
     if x == 1 :
         if z == 0 :
@@ -275,24 +285,26 @@ def _ed_prefix (pc) :
             if y >= 4 :
                 instruction = table_bli[y-4][z]
 
-    return c, instruction
+    return c, instruction, displacement, immediate
 
 
 def _fd_prefix (pc) :
 
     c = 1
     instruction = None
+    displacement = None
+    immediate = None
 
     if sms.rom[pc+c] in (0xDD, 0xED, 0xFD) :
-        instruction = 'NONI'
+        instruction = 'NOP'
     elif sms.rom[pc+c] == 0xCB :
-        d, instruction = _fdcb_prefix (pc+c)
+        d, instruction, displacement, immediate = _fdcb_prefix (pc+c)
         c += d
     else :
-        d, instruction = decode (pc + c)
+        d, instruction, displacement, immediate = decode (pc + c)
         c += d
 
-    return c, instruction
+    return c, instruction, displacement, immediate
 
 
 # Decodes the instruction at 'pc'.
@@ -302,7 +314,6 @@ def decode (pc) :
 
     # Get the opcode.
     opcode = sms.rom[pc]
-    c = 1
 
     x = (opcode & 0xC0) >> 6
     y = (opcode & 0x38) >> 3
@@ -310,7 +321,10 @@ def decode (pc) :
     p = y >> 1
     q = y & 0x1
 
+    c = 1
     instruction = None
+    displacement = None
+    immediate = None
 
     if x == 0 :
         if z == 0 :
@@ -415,7 +429,7 @@ def decode (pc) :
                 c += 2
                 instruction = 'JP 0x{0:04X}'.format (immediate)
             elif y == 1 :
-                d, instruction = _cb_prefix (pc + c)
+                d, instruction, displacement, immediate = _cb_prefix (pc + c)
                 c += d
             elif y == 2 :
                 immediate = sms.rom[pc+c]
@@ -440,13 +454,13 @@ def decode (pc) :
                     c += 2
                     instruction = 'CALL 0x{0:04X}'.format (immediate)
                 elif p == 1 :
-                    d, instruction = _dd_prefix (pc + c)
+                    d, instruction, displacement, immediate = _dd_prefix (pc + c)
                     c += d
                 elif p == 2 :
-                    d, instruction = _ed_prefix (pc + c)
+                    d, instruction, displacement, immediate = _ed_prefix (pc + c)
                     c += d
                 elif p == 3 :
-                    d, instruction = _fd_prefix (pc + c)
+                    d, instruction, displacement, immediate = _fd_prefix (pc + c)
                     c += d
 
         elif z == 6 :
@@ -456,47 +470,4 @@ def decode (pc) :
         elif z == 7 :
             instruction = 'RST {0}'.format (y * 8)
 
-    return c, instruction
-
-
-# Application entry point.
-if __name__ == '__main__' :
-
-    pc = 0
-
-    opts, args = getopt.getopt (sys.argv[1:], 'o:')
-    for o, a in opts :
-        if o == '-o' :
-            pc = int (a)
-
-    if len (args) == 0 :
-        print 'Usage: decoder.py [-o offset] <file>'
-        exit (1)
-
-    if not sms.loadRom (args[0]) :
-        exit (1)
-
-    while pc < len (sms.rom) :
-
-        c, instruction = decode (pc)
-
-        if instruction is None :
-
-            print 'Undecoded instruction at {0:08X}. Dumping memory...'.format (pc)
-
-            for l in xrange (-1, 2) :
-
-                buf = ''
-                for x in range (16) :
-                    buf += ' {0:02X}'.format (sms.rom[pc + (l * 16) + x])
-
-                print '{0:08X}{1} '.format (pc + l * 16, buf)
-
-            exit (2)
-
-        opcode = ''
-        for x in range (c) :
-            opcode += '{0:02X}'.format (sms.rom[pc+x])
-
-        print '{0:08X}\t{1}\t{2}'.format (pc, opcode, instruction.lower ())
-        pc += c
+    return c, instruction, displacement, immediate
