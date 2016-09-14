@@ -6,13 +6,11 @@ import numpy
 import memory
 
 rom = None
-mapper = memory.Mapper ()
 header = {}
 
 # Read the ROM header and save it somewhere useful.
-def _read_header () :
+def readHeader () :
 
-    global mapper
     global header
 
     header['raw'] = ''.join (['{0:02X} '.format (r) for r in rom[0x7FF0:0x8000]])
@@ -23,6 +21,12 @@ def _read_header () :
     header['region'] = (rom[0x7FFF] & 0xF0) >> 4
     header['size'] = rom[0x7FFF] & 0xF
 
+
+def readByte(pc) :
+    return rom[pc]
+
+def readWord(pc) :
+    return rom[pc] | rom[pc + 1] << 8
 
 # Load the rom at 'path' in to memory. Returns success.
 def loadRom (path) :
@@ -40,8 +44,7 @@ def loadRom (path) :
             file_size -= 512
 
         rom = numpy.fromfile (f, dtype=numpy.uint8)
-        mapper.initalize (rom)
-        _read_header ()
+        readHeader ()
         return True
 
     return False
