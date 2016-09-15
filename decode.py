@@ -221,6 +221,8 @@ def _dd_prefix (pc) :
 
     if next_byte in (0xDD, 0xED, 0xFD) :
         mnemonic = 'NOP'
+        prefix = 0xDD
+        opcode = next_byte
     elif next_byte == 0xCB :
         d, prefix, opcode, mnemonic, displacement, immediate = _ddcb_prefix (pc+c)
         c += d
@@ -304,6 +306,8 @@ def _fd_prefix (pc) :
 
     if next_byte in (0xDD, 0xED, 0xFD) :
         mnemonic = 'NOP'
+        prefix = 0xFD
+        opcode = next_byte
     elif next_byte == 0xCB :
         d, prefix, opcode, mnemonic, displacement, immediate = _fdcb_prefix (pc + c)
         c += d
