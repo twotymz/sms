@@ -18,8 +18,6 @@ if __name__ == '__main__' :
 
     sms.loadRom (sys.argv[1])
 
-    # Get a list of labels by looking for calls and jmps.
-
     pc = 0
     while pc < len (sms.rom) :
 
@@ -29,6 +27,7 @@ if __name__ == '__main__' :
 
         if prefix == 0 :
 
+            # Long jumps...
             if opcode == 0xC3 :
                 if state == STATE_FIND_MAIN :
                     print 'main is at 0x{0:04X}'.format (immediate)

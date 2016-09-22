@@ -128,7 +128,7 @@ def _ddcb_prefix (pc) :
             c+= 1
             mnemonic = 'SET {0}, (IX+{1})'.format (y, displacement)
 
-    return c, 0xDDCB, opcode, mnemonic, displacement, immediate
+    return c, 0xDDCB, opcode, mnemonic, displacement, immediate, mnemonic
 
 
 def _fdcb_prefix (pc) :
@@ -179,7 +179,7 @@ def _fdcb_prefix (pc) :
             c+= 1
             mnemonic = 'SET {0}, (IY+{1})'.format (y, displacement)
 
-    return c, 0xFDCB, opcode, mnemonic, displacement, immediate
+    return c, 0xFDCB, opcode, displacement, immediate, mnemonic
 
 
 def _cb_prefix (pc) :
@@ -206,7 +206,7 @@ def _cb_prefix (pc) :
     elif x == 3 :
         mnemonic = 'SET {0}, {1}'.format (y, table_r[z])
 
-    return c, 0xCB, opcode, mnemonic, displacement, immediate
+    return c, 0xCB, opcode, displacement, immediate, mnemonic
 
 
 def _dd_prefix (pc) :
@@ -224,14 +224,14 @@ def _dd_prefix (pc) :
         prefix = 0xDD
         opcode = next_byte
     elif next_byte == 0xCB :
-        d, prefix, opcode, mnemonic, displacement, immediate = _ddcb_prefix (pc+c)
+        d, prefix, opcode, displacement, immediate, mnemonic = _ddcb_prefix (pc+c)
         c += d
     else :
-        d, prefix, opcode, mnemonic, displacement, immediate = decode (pc + c)
+        d, prefix, opcode, displacement, immediate, mnemonic = decode (pc + c)
         prefix = 0xDD
         c += d
 
-    return c, prefix, opcode, mnemonic, displacement, immediate
+    return c, prefix, opcode, displacement, immediate, mnemonic
 
 
 def _ed_prefix (pc) :
@@ -291,7 +291,7 @@ def _ed_prefix (pc) :
             if y >= 4 :
                 mnemonic = table_bli[y-4][z]
 
-    return c, 0xED, opcode, mnemonic, displacement, immediate
+    return c, 0xED, opcode, displacement, immediate, mnemonic
 
 
 def _fd_prefix (pc) :
@@ -309,14 +309,14 @@ def _fd_prefix (pc) :
         prefix = 0xFD
         opcode = next_byte
     elif next_byte == 0xCB :
-        d, prefix, opcode, mnemonic, displacement, immediate = _fdcb_prefix (pc + c)
+        d, prefix, opcode, displacement, immediate, mnemonic = _fdcb_prefix (pc + c)
         c += d
     else :
-        d, prefix, opcode, mnemonic, displacement, immediate = decode (pc + c)
+        d, prefix, opcode, displacement, immediate, mnemonic = decode (pc + c)
         prefix = 0xFD
         c += d
 
-    return c, prefix, opcode, mnemonic, displacement, immediate
+    return c, prefix, opcode, displacement, immediate, mnemonic
 
 
 # Decodes the mnemonic at 'pc'.
@@ -442,7 +442,7 @@ def decode (pc) :
                 c += 2
                 mnemonic = 'JP 0x{0:04X}'.format (immediate)
             elif y == 1 :
-                d, prefix, opcode, mnemonic, displacement, immediate = _cb_prefix (pc + c)
+                d, prefix, opcode, displacement, immediate, mnemonic = _cb_prefix (pc + c)
                 c += d
             elif y == 2 :
                 immediate = sms.readByte(pc + c)
@@ -467,13 +467,13 @@ def decode (pc) :
                     c += 2
                     mnemonic = 'CALL 0x{0:04X}'.format (immediate)
                 elif p == 1 :
-                    d, prefix, opcode, mnemonic, displacement, immediate = _dd_prefix (pc + c)
+                    d, prefix, opcode, displacement, immediate, mnemonic = _dd_prefix (pc + c)
                     c += d
                 elif p == 2 :
-                    d, prefix, opcode, mnemonic, displacement, immediate = _ed_prefix (pc + c)
+                    d, prefix, opcode, displacement, immediate, mnemonic = _ed_prefix (pc + c)
                     c += d
                 elif p == 3 :
-                    d, prefix, opcode, mnemonic, displacement, immediate = _fd_prefix (pc + c)
+                    d, prefix, opcode, displacement, immediate, mnemonic = _fd_prefix (pc + c)
                     c += d
 
         elif z == 6 :
