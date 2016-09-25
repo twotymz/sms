@@ -128,7 +128,13 @@ def _ddcb_prefix (pc) :
             c+= 1
             mnemonic = 'SET {0}, (IX+{1})'.format (y, displacement)
 
-    return c, 0xDDCB, opcode, mnemonic, displacement, immediate, mnemonic
+    return c, {
+        'prefix'       : 0xDDCB,
+        'opcode'       : opcode,
+        'displacement' : displacement,
+        'immediate'    : immediate,
+        'mnemonic'     : mnemonic
+    }
 
 
 def _fdcb_prefix (pc) :
@@ -179,7 +185,13 @@ def _fdcb_prefix (pc) :
             c+= 1
             mnemonic = 'SET {0}, (IY+{1})'.format (y, displacement)
 
-    return c, 0xFDCB, opcode, displacement, immediate, mnemonic
+    return c, {
+        'prefix'       : 0xFDCB,
+        'opcode'       : opcode,
+        'displacement' : displacement,
+        'immediate'    : immediate,
+        'mnemonic'     : mnemonic
+    }
 
 
 def _cb_prefix (pc) :
@@ -206,32 +218,37 @@ def _cb_prefix (pc) :
     elif x == 3 :
         mnemonic = 'SET {0}, {1}'.format (y, table_r[z])
 
-    return c, 0xCB, opcode, displacement, immediate, mnemonic
-
+    return c, {
+        'prefix'       : 0xCB,
+        'opcode'       : opcode,
+        'displacement' : displacement,
+        'immediate'    : immediate,
+        'mnemonic'     : mnemonic
+    }
 
 def _dd_prefix (pc) :
 
     c = 1
-    prefix = None
-    mnemonic = None
-    displacement = None
-    immediate = None
-
     next_byte = sms.readByte (pc + c)
 
     if next_byte in (0xDD, 0xED, 0xFD) :
-        mnemonic = 'NOP'
-        prefix = 0xDD
-        opcode = next_byte
+        decoded = {
+            'prefix'       : 0xDD,
+            'opcode'       : next_byte,
+            'displacement' : None,
+            'immediate'    : None,
+            'mnemonic'     : 'NOP'
+        }
+
     elif next_byte == 0xCB :
-        d, prefix, opcode, displacement, immediate, mnemonic = _ddcb_prefix (pc+c)
+        d, decoded = _ddcb_prefix (pc+c)
         c += d
     else :
-        d, prefix, opcode, displacement, immediate, mnemonic = decode (pc + c)
-        prefix = 0xDD
+        d, decoded (pc + c)
+        decoded['prefix'] = 0xDD
         c += d
 
-    return c, prefix, opcode, displacement, immediate, mnemonic
+    return c, decoded
 
 
 def _ed_prefix (pc) :
@@ -291,32 +308,39 @@ def _ed_prefix (pc) :
             if y >= 4 :
                 mnemonic = table_bli[y-4][z]
 
-    return c, 0xED, opcode, displacement, immediate, mnemonic
+    return c, {
+        'prefix'       : 0xED,
+        'opcode'       : opcode,
+        'displacement' : displacement,
+        'immediate'    : immediate,
+        'mnemonic'     : mnemonic
+    }
 
 
 def _fd_prefix (pc) :
 
     c = 1
-    prefix = None
-    displacement = None
-    immediate = None
-    mnemonic = None
-
     next_byte = sms.readByte (pc + c)
 
     if next_byte in (0xDD, 0xED, 0xFD) :
-        mnemonic = 'NOP'
-        prefix = 0xFD
-        opcode = next_byte
+
+        decoded = {
+            'prefix'       : 0xFD,
+            'opcode'       : next_byte,
+            'displacement' : None,
+            'immediate'    : None,
+            'mnemonic'     : 'NOP'
+        }
+
     elif next_byte == 0xCB :
-        d, prefix, opcode, displacement, immediate, mnemonic = _fdcb_prefix (pc + c)
+        d, decoded = _fdcb_prefix (pc + c)
         c += d
     else :
-        d, prefix, opcode, displacement, immediate, mnemonic = decode (pc + c)
-        prefix = 0xFD
+        d, decoded = decode (pc + c)
+        decoded['prefix'] = 0xFD
         c += d
 
-    return c, prefix, opcode, displacement, immediate, mnemonic
+    return c, decoded
 
 
 # Decodes the mnemonic at 'pc'.
@@ -334,153 +358,157 @@ def decode (pc) :
     q = y & 0x1
 
     c = 1
-    prefix = 0
-    displacement = None
-    immediate = None
-    mnemonic = None
+
+    decoded = {
+        'prefix'       : 0,
+        'opcode'       : opcode,
+        'displacement' : None,
+        'immediate'    : None,
+        'mnemonic'     : None
+    }
 
     if x == 0 :
         if z == 0 :
             if y == 0 :
-                mnemonic = 'NOP'
+                decoded['mnemonic'] = 'NOP'
             elif y == 1 :
-                mnemonic = "EX AF, AF'"
+                decoded['mnemonic'] = "EX AF, AF'"
             elif y == 2 :
-                displacement = sms.readByte(pc+c)
+                decoded['displacement'] = sms.readByte(pc+c)
                 c += 1
-                mnemonic = 'DJNZ {0}'.format (displacement)
+                decoded['mnemonic'] = 'DJNZ {0}'.format (decoded['displacement'])
             elif y == 3 :
-                displacement = sms.readByte(pc+c)
+                decoded['displacement'] = sms.readByte(pc+c)
                 c += 1
-                mnemonic = 'JR {0}'.format (displacement)
+                decoded['mnemonic'] = 'JR {0}'.format (decoded['displacement'])
             elif y in (4, 5, 6, 7) :
-                displacement = sms.readByte(pc+c)
+                decoded['displacement'] = sms.readByte(pc+c)
                 c += 1
-                mnemonic = 'JR {0}, {1}'.format (table_cc[y-4], displacement)
+                decoded['mnemonic'] = 'JR {0}, {1}'.format (table_cc[y-4], decoded['displacement'])
 
         elif z == 1 :
             if q == 0 :
-                immediate = sms.readWord(pc + c)
+                decoded['immediate'] = sms.readWord(pc + c)
                 c += 2
-                mnemonic = 'LD {0}, 0x{1:04X}'.format (table_rp[p], immediate)
+                decoded['mnemonic'] = 'LD {0}, 0x{1:04X}'.format (table_rp[p], decoded['immediate'])
             elif q == 1 :
-                mnemonic = 'ADD HL, {0}'.format (table_rp[p])
+                decoded['mnemonic'] = 'ADD HL, {0}'.format (table_rp[p])
 
         elif z == 2 :
             if q == 0 :
                 if p == 0 :
-                    mnemonic = 'LD (BC), A'
+                    decoded['mnemonic'] = 'LD (BC), A'
                 elif p == 1 :
-                    mnemonic = 'LD (DE), A'
+                    decoded['mnemonic'] = 'LD (DE), A'
                 elif p == 2 :
-                    immediate = sms.readWord(pc + c)
+                    decoded['immediate'] = sms.readWord(pc + c)
                     c += 2
-                    mnemonic = 'LD (0x{0:04X}), HL'.format (immediate)
+                    decoded['mnemonic'] = 'LD (0x{0:04X}), HL'.format (decoded['immediate'])
                 elif p == 3 :
-                    immediate = sms.readWord(pc + c)
+                    decoded['immediate'] = sms.readWord(pc + c)
                     c += 2
-                    mnemonic = 'LD (0x{0:04X}), A'.format (immediate)
+                    decoded['mnemonic'] = 'LD (0x{0:04X}), A'.format (decoded['immediate'])
 
             elif q == 1 :
                 if p == 0 :
-                    mnemonic = 'LD A, (BC)'
+                    decoded['mnemonic'] = 'LD A, (BC)'
                 elif p == 1 :
-                    mnemonic = 'LD A, (DE)'
+                    decoded['mnemonic'] = 'LD A, (DE)'
                 elif p == 2 :
-                    immediate = sms.readWord(pc + c)
+                    decoded['immediate'] = sms.readWord(pc + c)
                     c += 2
-                    mnemonic = 'LD HL, (0x{0:04X})'.format (immediate)
+                    decoded['mnemonic'] = 'LD HL, (0x{0:04X})'.format (decoded['immediate'])
                 elif p == 3 :
-                    immediate = sms.readWord(pc + c)
+                    decoded['immediate'] = sms.readWord(pc + c)
                     c += 2
-                    mnemonic = 'LD A, (0x{0:04X})'.format (immediate)
+                    decoded['mnemonic'] = 'LD A, (0x{0:04X})'.format (decoded['immediate'])
 
         elif z == 3 :
             if q == 0 :
-                mnemonic = 'INC {0}'.format (table_rp[p])
+                decoded['mnemonic'] = 'INC {0}'.format (table_rp[p])
             elif q == 1 :
-                mnemonic = 'DEC {0}'.format (table_rp[p])
+                decoded['mnemonic'] = 'DEC {0}'.format (table_rp[p])
 
         elif z == 4 :
-            mnemonic = 'INC {0}'.format (table_r[y])
+            decoded['mnemonic'] = 'INC {0}'.format (table_r[y])
 
         elif z == 5 :
-            mnemonic = 'DEC {0}'.format (table_r[y])
+            decoded['mnemonic'] = 'DEC {0}'.format (table_r[y])
 
         elif z == 6 :
-            immediate = sms.readByte(pc)
+            decoded['immediate'] = sms.readByte(pc)
             c += 1
-            mnemonic = 'LD {0}, 0x{1:02X}'.format (table_r[y], immediate)
+            decoded['mnemonic'] = 'LD {0}, 0x{1:02X}'.format (table_r[y], decoded['immediate'])
 
         elif z == 7 :
-            mnemonic = ['RLCA', 'RRCA', 'RLA', 'RRA', 'DAA', 'CPL', 'SCF', 'CCF'][y]
+            decoded['mnemonic'] = ['RLCA', 'RRCA', 'RLA', 'RRA', 'DAA', 'CPL', 'SCF', 'CCF'][y]
 
     elif x == 1 :
         if z == 7 and y == 6 :
-            mnemonic = 'HALT'
+            decoded['mnemonic'] = 'HALT'
         else :
-            mnemonic = 'LD {0}, {1}'.format (table_r[y], table_r[z])
+            decoded['mnemonic'] = 'LD {0}, {1}'.format (table_r[y], table_r[z])
 
     elif x == 2 :
-        mnemonic = '{0} {1}'.format (table_alu[y], table_r[z])
+        decoded['mnemonic'] = '{0} {1}'.format (table_alu[y], table_r[z])
 
     elif x == 3 :
         if z == 0 :
-            mnemonic = 'RET {0}'.format (table_cc[y])
+            decoded['mnemonic'] = 'RET {0}'.format (table_cc[y])
         elif z == 1 :
             if q == 0 :
-                mnemonic = 'POP {0}'.format (table_rp2[p])
+                decoded['mnemonic'] = 'POP {0}'.format (table_rp2[p])
             elif q == 1 :
-                mnemonic = ['RET', 'EXX', 'JP HL', 'LD SP, HL'][p]
+                decoded['mnemonic'] = ['RET', 'EXX', 'JP HL', 'LD SP, HL'][p]
         elif z == 2 :
-            immediate = sms.readWord(pc + c)
+            decoded['immediate'] = sms.readWord(pc + c)
             c += 2
-            mnemonic = 'JP {0}, 0x{1:04X}'.format (table_cc[y], immediate)
+            decoded['mnemonic'] = 'JP {0}, 0x{1:04X}'.format (table_cc[y], decoded['immediate'])
         elif z == 3 :
             if y == 0 :
-                immediate = sms.readWord(pc + c)
+                decoded['immediate'] = sms.readWord(pc + c)
                 c += 2
-                mnemonic = 'JP 0x{0:04X}'.format (immediate)
+                decoded['mnemonic'] = 'JP 0x{0:04X}'.format (decoded['immediate'])
             elif y == 1 :
-                d, prefix, opcode, displacement, immediate, mnemonic = _cb_prefix (pc + c)
+                d, decoded = _cb_prefix (pc + c)
                 c += d
             elif y == 2 :
-                immediate = sms.readByte(pc + c)
+                decoded['immediate'] = sms.readByte(pc + c)
                 c += 1
-                mnemonic = 'OUT (0x{0:02X}), A'.format (immediate)
+                decoded['mnemonic'] = 'OUT (0x{0:02X}), A'.format (decoded['immediate'])
             elif y == 3 :
-                immediate = sms.readByte(pc + c)
+                decoded['immediate'] = sms.readByte(pc + c)
                 c += 1
-                mnemonic = 'IN A, (0x{0:02X})'.format (immediate)
+                decoded['mnemonic'] = 'IN A, (0x{0:02X})'.format (decoded['immediate'])
             elif y in (4, 5, 6, 7) :
-                mnemonic = ['EX (SP), HL', 'EX DE, HL', 'DI', 'EI'][y-4]
+                decoded['mnemonic'] = ['EX (SP), HL', 'EX DE, HL', 'DI', 'EI'][y-4]
         elif z == 4 :
-            immediate = sms.readWord(pc + c)
+            decoded['immediate'] = sms.readWord(pc + c)
             c += 2
-            mnemonic = 'CALL {0}, 0x{1:04X}'.format (table_cc[y], immediate)
+            decoded['mnemonic'] = 'CALL {0}, 0x{1:04X}'.format (table_cc[y], decoded['immediate'])
         elif z == 5 :
             if q == 0 :
-                mnemonic = 'PUSH {0}'.format (table_rp2[p])
+                decoded['mnemonic'] = 'PUSH {0}'.format (table_rp2[p])
             elif q == 1 :
                 if p == 0 :
-                    immediate = sms.readWord(pc + c)
+                    decoded['immediate'] = sms.readWord(pc + c)
                     c += 2
-                    mnemonic = 'CALL 0x{0:04X}'.format (immediate)
+                    decoded['mnemonic'] = 'CALL 0x{0:04X}'.format (decoded['immediate'])
                 elif p == 1 :
-                    d, prefix, opcode, displacement, immediate, mnemonic = _dd_prefix (pc + c)
+                    d, decoded = _dd_prefix (pc + c)
                     c += d
                 elif p == 2 :
-                    d, prefix, opcode, displacement, immediate, mnemonic = _ed_prefix (pc + c)
+                    d, decoded = _ed_prefix (pc + c)
                     c += d
                 elif p == 3 :
-                    d, prefix, opcode, displacement, immediate, mnemonic = _fd_prefix (pc + c)
+                    d, decoded = _fd_prefix (pc + c)
                     c += d
 
         elif z == 6 :
-            immediate = sms.readByte(pc+c)
+            decoded['immediate'] = sms.readByte(pc+c)
             c += 1
-            mnemonic = '{0} 0x{1:02X}'.format (table_alu[y], immediate)
+            decoded['mnemonic'] = '{0} 0x{1:02X}'.format (table_alu[y], decoded['immediate'])
         elif z == 7 :
-            mnemonic = 'RST {0}'.format (y * 8)
+            decoded['mnemonic'] = 'RST {0}'.format (y * 8)
 
-    return c, prefix, opcode, displacement, immediate, mnemonic
+    return c, decoded
