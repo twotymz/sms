@@ -1,4 +1,2 @@
-sms
+A WIP SMS Emulator
 ===
-
-My SMS emulator.
