@@ -4,10 +4,14 @@ import getopt
 import sms
 import sys
 
-STATE_FIND_MAIN = 0
-STATE_PROGRAM = 1
+class Label(object) :
 
-state = STATE_FIND_MAIN
+    def __init__(self) :
+        self._instructions = []
+
+
+_queue = [ 0x00, 0x38, 0x66 ]
+_labels = {}
 
 if __name__ == '__main__' :
 
@@ -18,20 +22,54 @@ if __name__ == '__main__' :
 
     sms.loadRom (sys.argv[1])
 
-    pc = 0
-    while pc < len (sms.rom) :
+    while len (_queue) > 0 :
 
-        c, prefix, opcode, displacement, immediate, mnemonic = decode.decode (pc)
-        #print '{0:04X} \t{1:06X} {2}'.format (pc, (prefix << 8) | opcode, mnemonic)
-        pc += c
+        pc = _queue[0]
+        del _queue[0]
 
-        if prefix == 0 :
+        label = Label ()
+        _labels[pc] = label
 
-            # Long jumps...
-            if opcode == 0xC3 :
-                if state == STATE_FIND_MAIN :
-                    print 'main is at 0x{0:04X}'.format (immediate)
-                    state= STATE_PROGRAM
+        #print '{0:X}'.format (pc)
 
-                elif opcode in (0xC4, 0xCC, 0xCD, 0xD4, 0xDC, 0xE4, 0xEC, 0xF4, 0xFC) :
-                    pass
+        while pc < len (sms.rom) :
+
+            decoded = decode.decode (pc)
+            label._instructions.append (decoded)
+            #print '{0:04X} \t{1:06X} {2}'.format (pc, (decoded['prefix'] << 8) | decoded['opcode'], decoded['mnemonic'])
+            pc += decoded['bytes']
+
+            if decoded['prefix'] == 0x00 :
+
+                # JMP
+                if decoded['opcode'] == 0xC3 :
+                    if decoded['immediate'] not in _queue and decoded['immediate'] not in _labels :
+                        _queue.append (decoded['immediate'])
+                        break
+
+                # CALL
+                if decoded['opcode'] == 0xCD :
+                    if decoded['immediate'] not in _queue and decoded['immediate'] not in _labels :
+                        _queue.append (decoded['immediate'])
+
+                # RETN
+                if decoded['opcode'] == 0xC9 :
+                    break
+
+            if decoded['prefix'] == 0xED :
+
+                # RETN, RETI
+                if decoded['opcode'] in (0x45, 0x4D) :
+                    break
+
+
+    for l in sorted (_labels) :
+
+        print '_LABEL_{0:X}:'.format (l)
+
+        pc = l
+
+        for decoded in _labels[l]._instructions :
+            print '{0:04X} \t{1:06X} {2}'.format (pc, (decoded['prefix'] << 8) | decoded['opcode'], decoded['mnemonic'])
+            #print '\t{0}'.format (decoded['mnemonic'])
+            pc += decoded['bytes']
