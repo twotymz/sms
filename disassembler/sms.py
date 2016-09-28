@@ -1,9 +1,6 @@
 
-import sys
 import os
-import getopt
 import numpy
-import cpu
 
 rom = None
 header = {}
@@ -26,10 +23,8 @@ def readByte(pc) :
     global rom
     return rom[pc]
 
-
 def readWord(pc) :
     return rom[pc] | rom[pc + 1] << 8
-
 
 # Load the rom at 'path' in to memory. Returns success.
 def loadRom (path) :

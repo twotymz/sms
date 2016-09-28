@@ -258,7 +258,5 @@ class CPU(object) :
                 self._pc += 1
                 return 4
 
-
-
-
-    raise Exception
+        print 'Unhandled opcode {0:X}'.format (opcode)
+        raise Exception
