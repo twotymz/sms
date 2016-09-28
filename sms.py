@@ -3,7 +3,6 @@ import sys
 import os
 import getopt
 import numpy
-import memory
 
 rom = None
 header = {}

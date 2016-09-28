@@ -63,7 +63,7 @@ if __name__ == '__main__' :
 
         if len (_labels) > 0 :
             if pc >= _labels[0] :
-                
+
                 if pc != 0 :
                     print
 
