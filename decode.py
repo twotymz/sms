@@ -423,11 +423,11 @@ def decode (pc) :
                     decoded['mnemonic'] = 'LD A, (DE)'
                 elif p == 2 :
                     decoded['immediate'] = sms.readWord(pc + c)
-                    c += 2
+                    decoded['bytes'] += 2
                     decoded['mnemonic'] = 'LD HL, (0x{0:04X})'.format (decoded['immediate'])
                 elif p == 3 :
                     decoded['immediate'] = sms.readWord(pc + c)
-                    c += 2
+                    decoded['bytes'] += 2
                     decoded['mnemonic'] = 'LD A, (0x{0:04X})'.format (decoded['immediate'])
 
         elif z == 3 :
@@ -443,8 +443,8 @@ def decode (pc) :
             decoded['mnemonic'] = 'DEC {0}'.format (table_r[y])
 
         elif z == 6 :
-            decoded['immediate'] = sms.readByte(pc)
-            c += 1
+            decoded['immediate'] = sms.readByte(pc + c)
+            decoded['bytes'] += 1
             decoded['mnemonic'] = 'LD {0}, 0x{1:02X}'.format (table_r[y], decoded['immediate'])
 
         elif z == 7 :
@@ -469,7 +469,7 @@ def decode (pc) :
                 decoded['mnemonic'] = ['RET', 'EXX', 'JP HL', 'LD SP, HL'][p]
         elif z == 2 :
             decoded['immediate'] = sms.readWord(pc + c)
-            c += 2
+            decoded['bytes'] += 2
             decoded['mnemonic'] = 'JP {0}, 0x{1:04X}'.format (table_cc[y], decoded['immediate'])
         elif z == 3 :
             if y == 0 :
