@@ -13,7 +13,7 @@ F_H = 4
 F_Z = 6
 F_S = 7
 
-class CPU(object) :
+class Z80(object) :
 
 
     def __init__(self) :

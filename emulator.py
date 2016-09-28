@@ -1,5 +1,5 @@
 
-import cpu
+import z80
 import getopt
 import sms
 import sys
@@ -23,7 +23,7 @@ if __name__ == '__main__' :
     print 'Region: {0:X}'.format (sms.header['region'])
     print 'Size: {0:X}'.format (sms.header['size'])
 
-    c = cpu.CPU()
+    cpu = z80.Z80()
     while True :
-        cycles = c.run ()
+        cycles = cpu.run ()
         break
