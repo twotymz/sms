@@ -4,14 +4,9 @@ import getopt
 import sms
 import sys
 
-class Label(object) :
-
-    def __init__(self) :
-        self._instructions = []
-
-
 _queue = [ 0x00, 0x38, 0x66 ]
-_labels = {}
+_labels = []
+_instructions = {}
 
 if __name__ == '__main__' :
 
@@ -27,15 +22,15 @@ if __name__ == '__main__' :
         pc = _queue[0]
         del _queue[0]
 
-        label = Label ()
-        _labels[pc] = label
-
-        #print '{0:X}'.format (pc)
+        _labels.append (pc)
 
         while pc < len (sms.rom) :
 
             decoded = decode.decode (pc)
-            label._instructions.append (decoded)
+
+            if pc not in _instructions :
+                _instructions[pc] = decoded
+
             #print '{0:04X} \t{1:06X} {2}'.format (pc, (decoded['prefix'] << 8) | decoded['opcode'], decoded['mnemonic'])
             pc += decoded['bytes']
 
@@ -62,14 +57,19 @@ if __name__ == '__main__' :
                 if decoded['opcode'] in (0x45, 0x4D) :
                     break
 
+    _labels = sorted (_labels)
 
-    for l in sorted (_labels) :
+    for pc in sorted (_instructions) :
 
-        print '_LABEL_{0:X}:'.format (l)
+        if len (_labels) > 0 :
+            if pc >= _labels[0] :
+                
+                if pc != 0 :
+                    print
 
-        pc = l
+                print '_LABEL_{0:X}:'.format (_labels[0])
+                del _labels[0]
 
-        for decoded in _labels[l]._instructions :
-            print '{0:04X} \t{1:06X} {2}'.format (pc, (decoded['prefix'] << 8) | decoded['opcode'], decoded['mnemonic'])
-            #print '\t{0}'.format (decoded['mnemonic'])
-            pc += decoded['bytes']
+        decoded = _instructions[pc]
+        print '\t{0}'.format (decoded['mnemonic'])
+        #print '{0:04X} \t{1:06X} {2}'.format (pc, (decoded['prefix'] << 8) | decoded['opcode'], decoded['mnemonic'])
