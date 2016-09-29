@@ -24,16 +24,19 @@ class Register8(object) :
     def get(self, v) :
         return self._v
 
+    # Increment the value of the register by 1.
     def inc(self) :
         self._v += 1
         if self._v > 0xFF : self._v = 0
 
+    # Decrement the value of the register by 1.
     def dec(self) :
         self._v -= 1
         if self._v < 0 : self._v = 0xFF
 
 ##
-# Simple class that represents a 16-bit data/address register or two 8-bit registers
+# Simple class that represents a 16-bit data/address register. It contains
+# two 8-bit register classes called lo and hi.
 class Register16(object) :
 
     def __init__(self) :
@@ -49,35 +52,33 @@ class Register16(object) :
         self._hi.set (v & 0xFF00) >> 8)
         self._lo.set (v & 0x00FF)
 
-    # 16-bit increment by 1.
-    def inc(self) :
+    # 16-bit increment by some value. Default is 1.
+    def inc(self, a=1) :
         v = self.get ()
-        v += 1
-        if v > 0xFFFF : v = 0
+        v += a
+
+        while v > 0xFFFF :
+            v -= 0xFFFF
+
         self.set (v)
 
-    # 16-bit decrement by 1.
-    def dec(self) :
+    # 16-bit decrement by some value. Default is 1.
+    def dec(self, a=1) :
         v = self.get ()
-        v -= 1
-        if v < 0 : v = 0xFFFF
+        v -= a
+
+        while v < 0 :
+            v += 0xFFFF
+
         self.set (v)
 
-    # Get the bottom 8-bit value of the register.
+    # Returns the bottom 8-bit register.
     def getLo(self) :
-        return self._lo.get ()
+        return self._lo
 
-    # Set the bottom 8-bits of the register.
-    def setLo(self, v) :
-        self._lo.set (v)
-
-    # Get the top 8-bit value of the register.
+    # Returns the top 8-bit register.
     def getHi(self) :
-        return self._hi.get ()
-
-    # Set the top 8-bits of the register.
-    def setHi(self, v) :
-        self._hi.set (v)
+        return self._hi
 
 
 class Z80(object) :
@@ -99,17 +100,38 @@ class Z80(object) :
         ]
 
         self._shadow_registers = [
-            Register16 (),    # R_BC
-            Register16 (),    # R_DE
+            Register16AF),    # R_BC
+            Register16 (),    # R_D
             Register16 (),    # R_HL
             Register16 ()     # R_AF
         ]
 
-    # Returns the number of clock cycles.
-    def run(self, io) :
+    def _table_rp (self, p) :
+        return [
+            self._registers[R_BC],
+            self._registers[R_DE],
+            self._registers[R_HL],
+            self._sp
+        ][p]
 
-        opcode = io['readByte'](self._pc)
-        self._rc += 1
+    def _table_r (self, p) :
+        return [
+            self._registers[R_BC].getHi (),
+            self._registers[R_BC].getLo (),
+            self._registers[R_DE].getHi (),
+            self._registers[R_DE].getLo (),
+            self._registers[R_HL].getHi (),
+            self._registers[R_HL].getLo (),
+            None,
+            self._registers[R_AF].getHi ()
+        ][p]
+
+    # Returns the number of clock cycles.
+    def run(self) :
+
+        opcode = sms.readByte(self._pc.get ())
+        self._pc.inc ()
+        self._rc.inc ()
 
         x = (opcode & 0xC0) >> 6
         y = (opcode & 0x38) >> 3
@@ -123,74 +145,61 @@ class Z80(object) :
 
                 # NOP
                 if y == 0 :
-                    self._pc += 1
                     return 4
 
                 # EX AF, AF'
                 elif y == 1 :
-                    t = self._regs[R_AF]
-                    self._regs[R_AF] = self._shadow_regs[R_AF]
-                    self._alt_regs[R_AF] = t
-                    self._pc += 1
+                    t = self._registers[R_AF].get ()
+                    self._registers[R_AF].set (self._shadow_registers[R_AF].get ())
+                    self._shadow_registers[R_AF].set (t)
                     return 4
 
                 # DJNZ *
                 elif y == 2 :
-                    displacement = io['readByte'](self._pc)
 
-                    b = sef._reg_hi (R_BC)
-                    b = b - 1
-                    if b < 0 : b = 255
-                    self._reg_set_hi (R_BC, b)
+                    displacement = sms.readByte(self._pc.get ())
+                    self._pc.inc ()
 
-                    if b != 0 :
-                        self._pc += displacement
+                    b = self._registers[R_BC].getHi()
+                    b.dec ()
+
+                    if b.get () != 0 :
+                        # TODO displacement will be unsigned byte.
+                        # TODO Need to convert to signed value.
+                        self._pc.add (displacement)
                         return 13
 
-                    self._pc += 2
                     return 8
 
                 # JR *
                 elif y == 3 :
-                    displacement = io['readByte'](self._pc)
-                    self._pc += displacement
+                    displacement = sms.readByte(self._pc.get ())
+                    self._pc.inc ()
+                    self._pc.add (displacement)
                     return 12
 
                 # JR cc, *
                 elif y in (4, 5, 6, 7) :
-                    displacement = io['readByte'](self._pc)
+                    displacement = sms.readByte(self._pc.get ())
+                    self._pc.inc ()
                     if self._test_cc (y-4) :
-                        self._pc += displacement
+                        self._pc.add (displacement)
                         return 12
-
-                    self._pc += 2
                     return 7
 
             elif z == 1 :
 
                 # LD reg, **
                 if q == 0 :
-                    w = io['readWord'] (self._pc + 1)
-                    if p == 3 :
-                        self._sp = w
-                    else :
-                        self._regs[p] = w
-                    self._pc += 3
+                    w = sms.readWord (self._pc.get ())
+                    self._pc.inc (2)
+                    self._table_rp (p).set (w)
                     return 10
+
                 # ADD HL, rp
                 elif q == 1 :
-
-                    if p == 3 :
-                        v = self._sp
-                    else :
-                        v = self._regs[p]
-
-                    r = self._regs[R_HL] + v
-
+                    self._table_rp(p).add (v)
                     # TODO Check overflow
-
-                    self._regs[R_HL] = r
-                    self._pc += 1
                     return 11
 
             elif z == 2 :
@@ -199,71 +208,71 @@ class Z80(object) :
 
                     # LD (BC), A
                     if p == 0 :
-                        io['writeByte'](self._regs[R_BC], self.reg_hi (R_AF))
-                        self.pc += 1
+                        d = self._registers[R_BC].get ()
+                        v = self._registers[R_AF].getHi ().get ()
+                        sms.writeByte(d, v)
                         return 7
+
                     # LD (DE), A
                     elif p == 1 :
-                        io['writeByte'](self._regs[R_DE], self.reg_hi (R_AF))
-                        self.pc += 1
+                        d = self._registers[R_DE].get ()
+                        v = self._registers[R_AF].getHi ().get ()
+                        sms.writeByte(d, v)
                         return 7
+
                     # LD (**), HL
                     elif p == 2 :
-                        addr = io['readWord'](self._pc + 1)
-                        io['writeWord'](addr, self._regs[R_HL])
-                        self.pc += 3
+                        d = sms.readWord(self._pc.get ())
+                        self._pc.inc (2)
+                        sms.writeWord(addr, self._registers[R_HL].get ())
                         return 16
+
                     # LD (**), A
                     elif p == 3 :
-                        addr = io['readWord'](self._pc + 1)
-                        io['writeByte'](addr, self._reg_hi (R_AF))
-                        self.pc += 3
+                        addr = sms.readWord(self._pc.get ())
+                        self._pc.inc (2)
+                        v = self._registers[R_AF].getHi ().get ()
+                        sms.writeByte(addr, v)
                         return 13
 
                 elif q == 1 :
 
                     # LD A, (BC)
                     if p == 0 :
-                        self._reg_set_hi (R_AF, io['readByte'] (self._regs[R_BC]))
-                        self._pc += 2
+                        addr = self._registers[R_BC].get ()
+                        self._registers[R_AF].getHi ().set (sms.readByte (addr))
                         return 7
+
                     # LD A, (DE)
                     elif p == 1 :
-                        self._reg_set_hi (R_AF, io['readByte'] (self._regs[R_DE]))
-                        self._pc += 2
+                        addr = self._registers[R_DE].get ()
+                        self._registers[R_AF].getHi ().set (sms.readByte (addr))
                         return 7
+
                     # LD HL, (**)
                     elif p == 2 :
-                        addr = io['readWord'] (self._pc + 1)
-                        self._regs[R_HL] = io['readWord'] (addr)
-                        self._pc += 3
+                        addr = sms.readWord (self._pc.get ())
+                        self._pc.inc (2)
+                        self._registers[R_HL].set (sms.readWord (addr))
                         return 16
+
                     # LD A, (**)
                     elif p == 3 :
-                        addr = io['readWord'] (self._pc + 1)
-                        self._reg_set_hi (R_AF, io['readByte'] (addr))
-                        self._pc += 3
+                        addr = sms.readWord (self._pc.get ())
+                        self._pc.inc (2)
+                        self._registers[R_AF].getHi ().set (sms.readByte (addr))
                         return 13
 
             elif z == 3 :
 
                 # INC rp
                 if q == 0 :
-                    if p == 3 :
-                        self._sp += 1
-                    else :
-                        self._regs[p] += 1
-                    self._pc += 1
+                    self._table_rp(p).inc ()
                     return 6
 
                 # DEC rp
                 elif q == 1 :
-                    if p == 3 :
-                        self._sp -= 1
-                    else :
-                        self._regs[p] -= 1
-
-                    self._pc += 1
+                    self._table_rp(p).dec ()
                     return 6
 
             # INC r
