@@ -1,6 +1,4 @@
 
-import sms
-
 R_BC = 0
 R_DE = 1
 R_HL = 2
@@ -13,40 +11,105 @@ F_H = 4
 F_Z = 6
 F_S = 7
 
-class Z80(object) :
-
+##
+# Simple class that represents an 8-bit register.
+class Register8(object) :
 
     def __init__(self) :
-        self._pc = 0
-        self._sp = 0
-        self._regs = [0, 0, 0, 0]
-        self._alt_regs = [0, 0, 0, 0]
+        self._v = 0
+
+    def set(self, v) :
+        self._v = v & 0xFF
+
+    def get(self, v) :
+        return self._v
+
+    def inc(self) :
+        self._v += 1
+        if self._v > 0xFF : self._v = 0
+
+    def dec(self) :
+        self._v -= 1
+        if self._v < 0 : self._v = 0xFF
+
+##
+# Simple class that represents a 16-bit data/address register or two 8-bit registers
+class Register16(object) :
+
+    def __init__(self) :
+        self._lo = Register8 ()
+        self._hi = Register8 ()
+
+    # Get the 16-bit value of the register.
+    def get(self) :
+        return (self._hi.get () << 8) | self._lo.get ()
+
+    # Set the 16-bit value of the register.
+    def set(self, v) :
+        self._hi.set (v & 0xFF00) >> 8)
+        self._lo.set (v & 0x00FF)
+
+    # 16-bit increment by 1.
+    def inc(self) :
+        v = self.get ()
+        v += 1
+        if v > 0xFFFF : v = 0
+        self.set (v)
+
+    # 16-bit decrement by 1.
+    def dec(self) :
+        v = self.get ()
+        v -= 1
+        if v < 0 : v = 0xFFFF
+        self.set (v)
+
+    # Get the bottom 8-bit value of the register.
+    def getLo(self) :
+        return self._lo.get ()
+
+    # Set the bottom 8-bits of the register.
+    def setLo(self, v) :
+        self._lo.set (v)
+
+    # Get the top 8-bit value of the register.
+    def getHi(self) :
+        return self._hi.get ()
+
+    # Set the top 8-bits of the register.
+    def setHi(self, v) :
+        self._hi.set (v)
 
 
-    def _test_cc(self, cc) :
-        return 0
+class Z80(object) :
 
+    def __init__(self) :
 
-    def _reg_lo(self, r) :
-        return self._regs[r] & 0xFF
+        self._pc = Register16 ()
+        self._sp = Register16 ()
+        self._ix = Register16 ()
+        self._iy = Register16 ()
+        self._iv = Register8 ()
+        self._rc = Register8 ()
 
+        self._registers = [
+            Register16 (),    # R_BC
+            Register16 (),    # R_DE
+            Register16 (),    # R_HL
+            Register16 ()     # R_AF
+        ]
 
-    def _reg_hi(self, r) :
-        return self._regs[r] >> 8
-
-
-    def _reg_set_lo(self, r, v) :
-        self._regs[r] = (self._regs[r] & 0xFF00) | (v & 0xFF)
-
-
-    def _reg_set_hi(self, r, v) :
-        self._regs[r] = (self._regs[r] & 0x00FF) | ((v & 0xFF) << 8)
-
+        self._shadow_registers = [
+            Register16 (),    # R_BC
+            Register16 (),    # R_DE
+            Register16 (),    # R_HL
+            Register16 ()     # R_AF
+        ]
 
     # Returns the number of clock cycles.
-    def run(self) :
+    def run(self, io) :
 
-        opcode = sms.readByte (self._pc)
+        opcode = io['readByte'](self._pc)
+        self._rc += 1
 
         x = (opcode & 0xC0) >> 6
         y = (opcode & 0x38) >> 3
@@ -73,7 +136,7 @@ class Z80(object) :
 
                 # DJNZ *
                 elif y == 2 :
-                    displacement = sms.readByte(self._pc)
+                    displacement = io['readByte'](self._pc)
 
                     b = sef._reg_hi (R_BC)
                     b = b - 1
@@ -89,13 +152,13 @@ class Z80(object) :
 
                 # JR *
                 elif y == 3 :
-                    displacement = sms.readByte(self._pc)
+                    displacement = io['readByte'](self._pc)
                     self._pc += displacement
                     return 12
 
                 # JR cc, *
                 elif y in (4, 5, 6, 7) :
-                    displacement = sms.readByte(self._pc)
+                    displacement = io['readByte'](self._pc)
                     if self._test_cc (y-4) :
                         self._pc += displacement
                         return 12
@@ -107,7 +170,7 @@ class Z80(object) :
 
                 # LD reg, **
                 if q == 0 :
-                    w = sms.readWord (self._pc + 1)
+                    w = io['readWord'] (self._pc + 1)
                     if p == 3 :
                         self._sp = w
                     else :
@@ -136,24 +199,24 @@ class Z80(object) :
 
                     # LD (BC), A
                     if p == 0 :
-                        sms.writeByte (self._regs[R_BC], self.reg_hi (R_AF))
+                        io['writeByte'](self._regs[R_BC], self.reg_hi (R_AF))
                         self.pc += 1
                         return 7
                     # LD (DE), A
                     elif p == 1 :
-                        sms.writeByte (self._regs[R_DE], self.reg_hi (R_AF))
+                        io['writeByte'](self._regs[R_DE], self.reg_hi (R_AF))
                         self.pc += 1
                         return 7
                     # LD (**), HL
                     elif p == 2 :
-                        addr = sms.readWord (self._pc + 1)
-                        sms.writeWord (addr, self._regs[R_HL])
+                        addr = io['readWord'](self._pc + 1)
+                        io['writeWord'](addr, self._regs[R_HL])
                         self.pc += 3
                         return 16
                     # LD (**), A
                     elif p == 3 :
-                        addr = sms.readWord (self._pc + 1)
-                        sms.writeByte (addr, self._reg_hi (R_AF))
+                        addr = io['readWord'](self._pc + 1)
+                        io['writeByte'](addr, self._reg_hi (R_AF))
                         self.pc += 3
                         return 13
 
@@ -161,24 +224,24 @@ class Z80(object) :
 
                     # LD A, (BC)
                     if p == 0 :
-                        self._reg_set_hi (R_AF, sms.readByte (self._regs[R_BC]))
+                        self._reg_set_hi (R_AF, io['readByte'] (self._regs[R_BC]))
                         self._pc += 2
                         return 7
                     # LD A, (DE)
                     elif p == 1 :
-                        self._reg_set_hi (R_AF, sms.readByte (self._regs[R_DE]))
+                        self._reg_set_hi (R_AF, io['readByte'] (self._regs[R_DE]))
                         self._pc += 2
                         return 7
                     # LD HL, (**)
                     elif p == 2 :
-                        addr = sms.readWord (self._pc + 1)
-                        self._regs[R_HL] = sms.readWord (addr)
+                        addr = io['readWord'] (self._pc + 1)
+                        self._regs[R_HL] = io['readWord'] (addr)
                         self._pc += 3
                         return 16
                     # LD A, (**)
                     elif p == 3 :
-                        addr = sms.readWord (self._pc + 1)
-                        self._reg_set_hi (R_AF, sms.readByte (addr))
+                        addr = io['readWord'] (self._pc + 1)
+                        self._reg_set_hi (R_AF, io['readByte'] (addr))
                         self._pc += 3
                         return 13
 
