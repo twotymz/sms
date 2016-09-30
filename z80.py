@@ -15,12 +15,13 @@ class Z80(object) :
 
     def __init__(self) :
 
-        self._pc = 0
-        self._sp = 0
-        self._iv = 0
-        self._rc = 0
-        self._i  = 0
-        self._r  = 0
+        self._pc  = 0
+        self._sph = 0
+        self._spl = 0
+        self._iv  = 0
+        self._rc  = 0
+        self._i   = 0
+        self._r   = 0
 
         # Registers
         self._b = 0
@@ -45,17 +46,24 @@ class Z80(object) :
     # Given two unsigned 8 bit values, make a 16 bit value.
     def _mw (self, h, l) : return h << 8 | l
 
-    def _bc (self) : return self._mw (self._b, self._c)
-    def _de (self) : return self._mw (self._b, self._c)
-    def _hl (self) : return self._mw (self._h, self._l)
-    def _ix (self) : return self._mw (self._ixh, self._ixl)
-    def _iy (self) : return self._mw (self._iyh, self._iyl)
-
     # Get the next byte at pc then incrementing pc.
     def _n (self) : b = sms.readByte (self._pc); self._pc = (self._pc + 1) & 0xFFFF; return b
 
     # Get the next word at pc incrementing pc.
     def _nn (self) : return self._mw (self._n (), self._n ())
+
+    # Get a displacement value (-128 to 127)
+    def _displacement(self) :
+        b = self._n ()
+        return b if b <= 127 else (256 - b) * -1
+
+    # Shorthand to access register pairs.
+    def _bc (self) : return self._mw (self._b, self._c)
+    def _de (self) : return self._mw (self._b, self._c)
+    def _hl (self) : return self._mw (self._h, self._l)
+    def _ix (self) : return self._mw (self._ixh, self._ixl)
+    def _iy (self) : return self._mw (self._iyh, self._iyl)
+    def _sp (self) : return self._mw (self._sph, self._spl)
 
     def _ld_a_a (self) : self._a = self._a
     def _ld_a_b (self) : self._a = self._b
@@ -215,11 +223,11 @@ class Z80(object) :
     def _ld_de_m_nn (self) : a = self._nn(); self._d = sms.readByte (a); self._e = sms.readByte (a+1)
     def _ld_hl_nn (self) : self._h = self._n (); self._l = self._n ()
     def _ld_hl_m_nn (self) : a = self._nn(); self._h = sms.readByte (a); self._l = sms.readByte (a+1)
-    def _ld_sp_hl (self) : self._sp = self._mw (self._h, self._l)
-    def _ld_sp_ix (self) : self._sp = self._ix ()
-    def _ld_sp_iy (self) : self._sp = self._iy ()
-    def _ld_sp_nn (self) : self._sp = self._mw (self._n (), self._n ())
-    def _ld_sp_m_nn (self) : self._sp = sms.readWord (self._nn ())
+    def _ld_sp_hl (self) : self._sph = self._h; self._spl = self._l
+    def _ld_sp_ix (self) : self._sph = self._ixh; self._spl = self._ixl
+    def _ld_sp_iy (self) : self._sph = self._iyh; self._spl = self._iyl
+    def _ld_sp_nn (self) : self._sph = self._n (); self._spl = self._n ()
+    def _ld_sp_m_nn (self) : a = self._nn(); self._sph = sms.readByte (a); self._spl = sms.readByte (a+1)
     def _ld_ix_nn (self) : self._ixh = self._n(); self._ixl = self._n ()
     def _ld_ix_m_nn (self) : a = self._nn (); self._ixh = sms.readByte (a); self._ixl = sms.readByte (a+1)
     def _ld_iy_nn (self) : self._iyh = self._n(); self._iyl = self._n ()
@@ -231,23 +239,85 @@ class Z80(object) :
     def _ld_m_hl_c (self) : sms.writeByte (self._hl (), self._c)
     def _ld_m_hl_d (self) : sms.writeByte (self._hl (), self._d)
     def _ld_m_hl_e (self) : sms.writeByte (self._hl (), self._e)
-    def _ld_m_hl_h (self) : sms.writeByte (self._hl (), self._n)
+    def _ld_m_hl_h (self) : sms.writeByte (self._hl (), self._h)
     def _ld_m_hl_l (self) : sms.writeByte (self._hl (), self._l)
+    def _ld_m_hl_n (self) : sms.writeByte (self._hl (), self._n())
     def _ld_m_nn_a (self) : sms.writeByte (self._mw (self._n (), self._n()), self._a)
     def _ld_m_nn_bc (self) : a = self._nn(); sms.writeByte (a, self._b); sms.writeByte (a+1, self._c)
     def _ld_m_nn_de (self) : a = self._nn(); sms.writeByte (a, self._d); sms.writeByte (a+1, self._e)
     def _ld_m_nn_hl (self) : a = self._nn(); sms.writeByte (a, self._h); sms.writeByte (a+1, self._l)
-    def _ld_m_nn_sp (self) : a = self._nn(); sms.writeByte (a, self._sp >> 8); sms.writeByte (a+1, self._sp & 0xFF)
+    def _ld_m_nn_sp (self) : a = self._nn(); sms.writeByte (a, self._sph); sms.writeByte (a+1, self._spl)
     def _ld_m_nn_ix (self) : a = self._nn(); sms.writeByte (a, self._ixh); sms.writeByte (a+1, self._ixl)
     def _ld_m_nn_iy (self) : a = self._nn(); sms.writeByte (a, self._iyh); sms.writeByte (a+1, self._iyl)
 
-    def _inc_rc (self) : self._rc = (self._rc + 1) & 0xFF
+    def _jp (self) : pass
+    def _jp_m_hl (self) : pass
+    def _jp_m_ix (self) : pass
+    def _jp_m_iy (self) : pass
+    def _jp_nz (self) : pass
+    def _jp_z (self) : pass
+    def _jp_nc (self) : pass
+    def _jp_po (self) : pass
+    def _jp_pe (self) : pass
+    def _jp_p (self) : pass
+    def _jp_m (self) : pass
+    def _jr (self) : d = self._displacement (); self._pc = (self._pc + d) & 0xFFFF
+    def _jr_nz (self) : pass
+    def _jr_z (self) : pass
+    def _jr_nc (self) : pass
+    def _jr_c (self) : pass
+    def _djnz (self) : pass
+
+    def _inc_a (self) : pass
+    def _inc_b (self) : pass
+    def _inc_c (self) : pass
+    def _inc_d (self) : pass
+    def _inc_e (self) : pass
+    def _inc_h (self) : pass
+    def _inc_l (self) : pass
+    def _inc_ixh (self) : pass
+    def _inc_ixl (self) : pass
+    def _inc_m_hl (self) : pass
+    def _inc_m_ixn (self) : pass
+    def _inc_m_iyn (self) : pass
+    def _inc_bc (self) : pass
+    def _inc_de (self) : pass
+    def _inc_hl (self) : pass
+    def _inc_ix (self) : pass
+    def _inc_iy (self) : pass
+    def _inc_sp (self) : pass
+
+    def _dec_a (self) : pass
+    def _dec_b (self) : pass
+    def _dec_c (self) : pass
+    def _dec_d (self) : pass
+    def _dec_e (self) : pass
+    def _dec_h (self) : pass
+    def _dec_l (self) : pass
+    def _dec_ixh (self) : pass
+    def _dec_ixl (self) : pass
+    def _dec_m_hl (self) : pass
+    def _dec_m_ixn (self) : pass
+    def _dec_m_iyn (self) : pass
+    def _dec_bc (self) : pass
+    def _dec_de (self) : pass
+    def _dec_hl (self) : pass
+    def _dec_ix (self) : pass
+    def _dec_iy (self) : pass
+    def _dec_sp (self) : pass
+
+    
+
+    def _nop (self) : pass
+    def _halt (self) : pass
+
+    def _ex_af_af (self) : self._a, self._sa = self._sa, self._a; self._f, self._sf = self._sf, self._f
 
     # Returns the number of clock cycles.
     def run(self) :
 
         opcode = self._n ()
-        self._inc_rc ()
+        self._rc = (self._rc + 1) & 0xFF
 
         x = (opcode & 0xC0) >> 6
         y = (opcode & 0x38) >> 3
@@ -265,36 +335,25 @@ class Z80(object) :
 
                 # EX AF, AF'
                 elif y == 1 :
-                    self._a, self._sa = self._sa, self._a
-                    self._f, self._sf = self._sf, self._f
+                    self._ex_af_af ()
                     return 4
 
                 # DJNZ *
                 elif y == 2 :
-
-                    displacement = self._n ()
+                    d = self._displacement ()
                     self._b = (self._b - 1) & 0xFF
-
                     if self._b != 0 :
-                        # TODO displacement will be unsigned byte.
-                        # TODO Need to convert to signed value.
-                        self._pc = (self._pc + displacement) & 0xFFFF
+                        self._pc = (self._pc + d) & 0xFFFF
                         return 13
-
                     return 8
 
                 # JR *
                 elif y == 3 :
-                    displacement = self._n ()
-                    # TODO displacement will be unsigned byte.
-                    # TODO Need to convert to signed value.
-                    self._pc = (self._pc + displacement) & 0xFFFF
+                    self._pc = (self._pc + self._displacement ()) & 0xFFFF
                     return 12
 
                 elif y in (4, 5, 6, 7) :
-
-                    displacement = self._n ()
-
+                    #displacement = self._n ()
                     #if self._test_cc (y-4) :
                     #    self._pc.add (displacement)
                     #    return 12
@@ -304,31 +363,18 @@ class Z80(object) :
 
                 if q == 0 :
                     if p == 0 :
-                        self._b = sms.readByte (self._pc)
-                        self._inc_pc ()
-                        self._c = sms.readByte (self._pc)
-                        self._inc_pc ()
+                        self._ld_bc_nn ()
                     elif p == 1 :
-                        self._d = sms.readByte (self._pc)
-                        self._inc_pc ()
-                        self._e = sms.readByte (self._pc)
-                        self._inc_pc ()
+                        self._ld_de_nn ()
                     elif p == 2 :
-                        self._h = sms.readByte (self._pc)
-                        self._inc_pc ()
-                        self._l = sms.readByte (self._pc)
-                        self._inc_pc ()
+                        self._ld_hl_nn ()
                     elif p == 3 :
-                        self._a = sms.readByte (self._pc)
-                        self._inc_pc ()
-                        self._f = sms.readByte (self._pc)
-                        self._inc_pc ()
+                        self._ld_sp_nn ()
                     return 10
 
                 # ADD HL, rp
                 elif q == 1 :
-                    # self._table_rp(p).add (v)
-                    # TODO Check overflow
+                    # TODO
                     return 11
 
             elif z == 2 :
@@ -337,112 +383,88 @@ class Z80(object) :
 
                     # LD (BC), A
                     if p == 0 :
-                        addr = self._b << 8 | self._c
-                        sms.writeByte(addr, self._a)
+                        self._ld_m_bc_a ()
                         return 7
 
                     # LD (DE), A
                     elif p == 1 :
-                        addr = self._d << 8 | self._e
-                        sms.writeByte(addr, self._a)
+                        self._ld_m_de_a ()
                         return 7
 
                     # LD (**), HL
                     elif p == 2 :
-                        addr = sms.readByte (self._pc) << 8
-                        self._inc_pc ()
-                        addr = addr | sms.readByte (self._pc)
-                        self._inc_pc ()
-                        sms.writeByte (addr, self._h)
-                        sms.writeByte (addr + 1, self._l)
+                        self._ld_m_nn_hl ()
                         return 16
 
                     # LD (**), A
                     elif p == 3 :
-                        #addr = sms.readWord(self._pc.get ())
-                        #self._pc.inc (2)
-                        #v = self._registers[R_AF].getHi ().get ()
-                        #sms.writeByte(addr, v)
+                        self._ld_m_nn_a ()
                         return 13
 
                 elif q == 1 :
 
                     # LD A, (BC)
                     if p == 0 :
-                        addr = self._b << 8 | self._c
-                        self._a = sms.readByte (addr)
+                        self._ld_a_m_bc ()
                         return 7
 
                     # LD A, (DE)
                     elif p == 1 :
-                        addr = self._d << 8 | self._e
-                        self._a = sms.readByte (addr)
+                        self._ld_a_m_de ()
                         return 7
 
                     # LD HL, (**)
                     elif p == 2 :
-                        addr = sms.readByte (self._pc) << 8
-                        self._inc_pc ()
-                        addr = addr | sms.readByte (self._pc)
-                        self._inc_pc ()
-                        self._h = sms.readByte (addr)
-                        self._l = sms.readByte (addr + 1)
+                        self._ld_hl_m_nn ()
                         return 16
 
                     # LD A, (**)
                     elif p == 3 :
-                        addr = sms.readByte (self._pc) << 8
-                        self._inc_pc ()
-                        addr = addr | sms.readByte (self._pc)
-                        self._inc_pc ()
-                        self._a = sms.readByte (addr)
+                        self._ld_a_m_nn ()
                         return 13
 
             elif z == 3 :
 
                 # INC rp
                 if q == 0 :
-                    self._table_rp(p).inc ()
+                    #self._table_rp(p).inc ()
                     return 6
 
                 # DEC rp
                 elif q == 1 :
-                    self._table_rp(p).dec ()
+                    #self._table_rp(p).dec ()
                     return 6
 
             # INC r
             elif z == 4 :
                 # TODO
-                self._inc_pc ()
+                #self._inc_pc ()
                 return 4
 
             # DEC r
             elif z == 5 :
                 # TODO
-                self._inc_pc ()
+                #self._inc_pc ()
                 return 4
 
             # LD r, *
             elif z == 6 :
                 if y == 0 :
-                    self._b = sms.readByte (self._pc)
+                    self._ld_b_n ()
                 elif y == 1 :
-                    self._c = sms.readByte (self._pc)
+                    self._ld_c_n ()
                 elif y == 2 :
-                    self._d = sms.readByte (self._pc)
+                    self._ld_d_n ()
                 elif y == 3 :
-                    self._e = sms.readByte (self._pc)
+                    self._ld_e_n ()
                 elif y == 4 :
-                    self._h = sms.readByte (self._pc)
+                    self._ld_h_n ()
                 elif y == 5 :
-                    self._l = sms.readByte (self._pc)
+                    self._ld_l_n ()
                 elif y == 6 :
-                    # TODO
-                    pass
+                    self._ld_m_hl_n ()
                 elif y == 7 :
-                    self._a = sms.readByte (self._pc)
-
-                self._inc_pc ()
+                    self._ld_a_n ()
                 return 7
 
             elif z == 7 :
