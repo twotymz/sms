@@ -108,6 +108,139 @@ class Z80(object) :
         self._sa = 0
         self._sf = 0
 
+
+    def _ld_a_a (self) : self._a = self._a
+    def _ld_a_b (self) : self._a = self._b
+    def _ld_a_c (self) : self._a = self._c
+    def _ld_a_d (self) : self._a = self._d
+    def _ld_a_e (self) : self._a = self._e
+    def _ld_a_h (self) : self._a = self._h
+    def _ld_a_l (self) : self._a = self._l
+    def _ld_a_i (self) : pass
+    def _ld_a_r (self) : pass
+    def _ld_a_ixh (self) : pass
+    def _ld_a_ixl (self) : pass
+    def _ld_a_iyh (self) : pass
+    def _ld_a_iyl (self) : pass
+    def _ld_a_m_bc (self) : pass
+    def _ld_a_m_de (self) : pass
+    def _ld_a_m_hl (self) : pass
+    def _ld_a_m_ixn (self) : pass
+    def _ld_a_m_iyn (self) : pass
+    def _ld_a_n (self) : pass
+    def _ld_a_m_nn (self) : pass
+    def _ld_b_a (self) : self._b = self._a
+    def _ld_b_b (self) : self._b = self._b
+    def _ld_b_c (self) : self._c = self._c
+    def _ld_b_d (self) : self._d = self._d
+    def _ld_b_e (self) : self._e = self._e
+    def _ld_b_h (self) : self._h = self._h
+    def _ld_b_l (self) : self._l = self._l
+    def _ld_b_ixh (self) : pass
+    def _ld_b_ixl (self) : pass
+    def _ld_b_iyh (self) : pass
+    def _ld_b_iyl (self) : pass
+    def _ld_b_m_hl (self) : pass
+    def _ld_b_m_ixn (self) : pass
+    def _ld_b_m_iyn (self) : pass
+    def _ld_b_n (self) : pass
+    def _ld_c_a (self) : self._c = self._a
+    def _ld_c_b (self) : self._c = self._b
+    def _ld_c_c (self) : self._c = self._c
+    def _ld_c_d (self) : self._c = self._d
+    def _ld_c_e (self) : self._c = self._e
+    def _ld_c_h (self) : self._c = self._h
+    def _ld_c_l (self) : self._c = self._l
+    def _ld_c_ixh (self) : pass
+    def _ld_c_ixl (self) : pass
+    def _ld_c_iyh (self) : pass
+    def _ld_c_iyl (self) : pass
+    def _ld_c_m_hl (self) : pass
+    def _ld_c_m_ixn (self) : pass
+    def _ld_c_m_iyn (self) : pass
+    def _ld_c_n (self) : pass
+    def _ld_d_a (self) : self._d = self._a
+    def _ld_d_b (self) : self._d = self._b
+    def _ld_d_c (self) : self._d = self._c
+    def _ld_d_d (self) : self._d = self._d
+    def _ld_d_e (self) : self._d = self._e
+    def _ld_d_h (self) : self._d = self._h
+    def _ld_d_l (self) : self._d = self._l
+    def _ld_d_ixh (self) : pass
+    def _ld_d_ixl (self) : pass
+    def _ld_d_iyh (self) : pass
+    def _ld_d_iyl (self) : pass
+    def _ld_d_m_hl (self) : pass
+    def _ld_d_m_ixn (self) : pass
+    def _ld_d_m_iyn (self) : pass
+    def _ld_d_n (self) : pass
+    def _ld_e_a (self) : self._e = self._a
+    def _ld_e_b (self) : self._e = self._b
+    def _ld_e_c (self) : self._e = self._c
+    def _ld_e_d (self) : self._e = self._d
+    def _ld_e_e (self) : self._e = self._e
+    def _ld_e_h (self) : self._e = self._h
+    def _ld_e_l (self) : self._e = self._l
+    def _ld_e_ixh (self) : pass
+    def _ld_e_ixl (self) : pass
+    def _ld_e_iyh (self) : pass
+    def _ld_e_iyl (self) : pass
+    def _ld_e_m_hl (self) : pass
+    def _ld_e_m_ixn (self) : pass
+    def _ld_e_m_iyn (self) : pass
+    def _ld_e_n (self) : pass
+    def _ld_h_a (self) : self._h = self._a
+    def _ld_h_b (self) : self._h = self._b
+    def _ld_h_c (self) : self._h = self._c
+    def _ld_h_d (self) : self._h = self._d
+    def _ld_h_e (self) : self._h = self._e
+    def _ld_h_h (self) : self._h = self._h
+    def _ld_h_l (self) : self._h = self._l
+    def _ld_h_ixh (self) : pass
+    def _ld_h_ixl (self) : pass
+    def _ld_h_iyh (self) : pass
+    def _ld_h_iyl (self) : pass
+    def _ld_h_m_hl (self) : pass
+    def _ld_h_m_ixn (self) : pass
+    def _ld_h_m_iyn (self) : pass
+    def _ld_h_n (self) : pass
+    def _ld_l_a (self) : self._l = self._a
+    def _ld_l_b (self) : self._l = self._b
+    def _ld_l_c (self) : self._l = self._c
+    def _ld_l_d (self) : self._l = self._d
+    def _ld_l_e (self) : self._l = self._e
+    def _ld_l_h (self) : self._l = self._h
+    def _ld_l_l (self) : self._l = self._l
+    def _ld_l_ixh (self) : pass
+    def _ld_l_ixl (self) : pass
+    def _ld_l_iyh (self) : pass
+    def _ld_l_iyl (self) : pass
+    def _ld_l_m_hl (self) : pass
+    def _ld_l_m_ixn (self) : pass
+    def _ld_l_m_iyn (self) : pass
+    def _ld_l_n (self) : pass
+    def _ld_i_a (self) : pass
+    def _ld_r_a (self) : pass
+    def _ld_sp_hl (self) : pass
+    def _ld_sp_ix (self) : pass
+    def _ld_sp_iy (self) : pass
+    def _ld_m_bc_a (self) : pass
+    def _ld_m_de_a (self) : pass
+    def _ld_m_hl_a (self) : pass
+    def _ld_hl_b (self) : pass
+    def _ld_hl_c (self) : pass
+    def _ld_hl_d (self) : pass
+    def _ld_hl_e (self) : pass
+    def _ld_hl_h (self) : pass
+    def _ld_hl_l (self) : pass
+    def _ld_m_nn_a (self) : pass
+    def _ld_m_nn_bc (self) : pass
+    def _ld_m_nn_de (self) : pass
+    def _ld_m_nn_hl (self) : pass
+    def _ld_m_nn_sp (self) : pass
+    def _ld_m_nn_ix (self) : pass
+    def _ld_m_nn_iy (self) : pass
+
     # Returns the number of clock cycles.
     def run(self) :
 
@@ -172,19 +305,26 @@ class Z80(object) :
             elif z == 1 :
 
                 if q == 0 :
-
-                    r1, r2 = [
-                        (self._b, self._c),
-                        (self._d, self._e),
-                        (self._h, self._l),
-                        (self._a, self._f)
-                    ][p]                
-
-                    r1 = sms.readByte (self._pc)
-                    self._pc = (self._pc + 1) & 0xFFFF
-                    r2 = sms.readByte (self._pc)
-                    self._pc = (self._pc + 1) & 0xFFFF
-
+                    if p == 0 :
+                        self._b = sms.readByte (self._pc)
+                        self._pc = (self._pc + 1) & 0xFFFF
+                        self._c = sms.readByte (self._pc)
+                        self._pc = (self._pc + 1) & 0xFFFF
+                    elif p == 1 :
+                        self._d = sms.readByte (self._pc)
+                        self._pc = (self._pc + 1) & 0xFFFF
+                        self._e = sms.readByte (self._pc)
+                        self._pc = (self._pc + 1) & 0xFFFF
+                    elif p == 2 :
+                        self._h = sms.readByte (self._pc)
+                        self._pc = (self._pc + 1) & 0xFFFF
+                        self._l = sms.readByte (self._pc)
+                        self._pc = (self._pc + 1) & 0xFFFF
+                    elif p == 3 :
+                        self._a = sms.readByte (self._pc)
+                        self._pc = (self._pc + 1) & 0xFFFF
+                        self._f = sms.readByte (self._pc)
+                        self._pc = (self._pc + 1) & 0xFFFF
                     return 10
 
                 # ADD HL, rp
@@ -199,23 +339,24 @@ class Z80(object) :
 
                     # LD (BC), A
                     if p == 0 :
-                        d = self._registers[R_BC].get ()
-                        v = self._registers[R_AF].getHi ().get ()
-                        sms.writeByte(d, v)
+                        addr = self._b << 8 | self._c
+                        sms.writeByte(addr, self._a)
                         return 7
 
                     # LD (DE), A
                     elif p == 1 :
-                        d = self._registers[R_DE].get ()
-                        v = self._registers[R_AF].getHi ().get ()
-                        sms.writeByte(d, v)
+                        addr = self._d << 8 | self._e
+                        sms.writeByte(addr, self._a)
                         return 7
 
                     # LD (**), HL
                     elif p == 2 :
-                        d = sms.readWord(self._pc.get ())
-                        self._pc.inc (2)
-                        sms.writeWord(addr, self._registers[R_HL].get ())
+                        addr = sms.readByte (self._pc) << 8
+                        self._pc = (self._pc + 1) & 0xFFFF
+                        addr = addr | sms.readByte (self._pc)
+                        self._pc = (self._pc + 1) & 0xFFFF
+                        sms.writeByte (addr, self._h)
+                        sms.writeByte (addr + 1, self._l)
                         return 16
 
                     # LD (**), A
@@ -230,28 +371,33 @@ class Z80(object) :
 
                     # LD A, (BC)
                     if p == 0 :
-                        addr = self._registers[R_BC].get ()
-                        self._registers[R_AF].getHi ().set (sms.readByte (addr))
+                        addr = self._b << 8 | self._c
+                        self._a = sms.readByte (addr)
                         return 7
 
                     # LD A, (DE)
                     elif p == 1 :
-                        addr = self._registers[R_DE].get ()
-                        self._registers[R_AF].getHi ().set (sms.readByte (addr))
+                        addr = self._d << 8 | self._e
+                        self._a = sms.readByte (addr)
                         return 7
 
                     # LD HL, (**)
                     elif p == 2 :
-                        addr = sms.readWord (self._pc.get ())
-                        self._pc.inc (2)
-                        self._registers[R_HL].set (sms.readWord (addr))
+                        addr = sms.readByte (self._pc) << 8
+                        self._pc = (self._pc + 1) & 0xFFFF
+                        addr = addr | sms.readByte (self._pc)
+                        self._pc = (self._pc + 1) & 0xFFFF
+                        self._h = sms.readByte (addr)
+                        self._l = sms.readByte (addr + 1)
                         return 16
 
                     # LD A, (**)
                     elif p == 3 :
-                        addr = sms.readWord (self._pc.get ())
-                        self._pc.inc (2)
-                        self._registers[R_AF].getHi ().set (sms.readByte (addr))
+                        addr = sms.readByte (self._pc) << 8
+                        self._pc = (self._pc + 1) & 0xFFFF
+                        addr = addr | sms.readByte (self._pc)
+                        self._pc = (self._pc + 1) & 0xFFFF
+                        self._a = sms.readByte (addr)
                         return 13
 
             elif z == 3 :
@@ -280,8 +426,25 @@ class Z80(object) :
 
             # LD r, *
             elif z == 6 :
-                # TODO
-                self._pc += 2
+                if y == 0 :
+                    self._b = sms.readByte (self._pc)
+                elif y == 1 :
+                    self._c = sms.readByte (self._pc)
+                elif y == 2 :
+                    self._d = sms.readByte (self._pc)
+                elif y == 3 :
+                    self._e = sms.readByte (self._pc)
+                elif y == 4 :
+                    self._h = sms.readByte (self._pc)
+                elif y == 5 :
+                    self._l = sms.readByte (self._pc)
+                elif y == 6 :
+                    # TODO
+                    pass
+                elif y == 7 :
+                    self._a = sms.readByte (self._pc)
+
+                self._pc = (self._pc + 1) & 0xFFFF
                 return 7
 
             elif z == 7 :
@@ -318,7 +481,7 @@ class Z80(object) :
                 elif y == 7 :
                     pass
 
-                self._pc += 1
+                self._pc = (self._pc + 1) & 0xFFFF
                 return 4
 
         print 'Unhandled opcode {0:X}'.format (opcode)
