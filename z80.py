@@ -85,53 +85,35 @@ class Z80(object) :
 
     def __init__(self) :
 
-        self._pc = Register16 ()
-        self._sp = Register16 ()
-        self._ix = Register16 ()
-        self._iy = Register16 ()
-        self._iv = Register8 ()
-        self._rc = Register8 ()
+        self._pc = 0
+        self._sp = 0
+        self._ix = 0
+        self._iy = 0
+        self._iv = 0
+        self._rc = 0
 
-        self._registers = [
-            Register16 (),    # R_BC
-            Register16 (),    # R_DE
-            Register16 (),    # R_HL
-            Register16 ()     # R_AF
-        ]
+        # Registers
+        self._b = 0
+        self._c = 0
+        self._d = 0
+        self._e = 0
+        self._a = 0
+        self._f = 0
 
-        self._shadow_registers = [
-            Register16AF),    # R_BC
-            Register16 (),    # R_D
-            Register16 (),    # R_HL
-            Register16 ()     # R_AF
-        ]
-
-    def _table_rp (self, p) :
-        return [
-            self._registers[R_BC],
-            self._registers[R_DE],
-            self._registers[R_HL],
-            self._sp
-        ][p]
-
-    def _table_r (self, p) :
-        return [
-            self._registers[R_BC].getHi (),
-            self._registers[R_BC].getLo (),
-            self._registers[R_DE].getHi (),
-            self._registers[R_DE].getLo (),
-            self._registers[R_HL].getHi (),
-            self._registers[R_HL].getLo (),
-            None,
-            self._registers[R_AF].getHi ()
-        ][p]
+        # Shadow registers
+        self._sb = 0
+        self._sc = 0
+        self._sd = 0
+        self._se = 0
+        self._sa = 0
+        self._sf = 0
 
     # Returns the number of clock cycles.
     def run(self) :
 
-        opcode = sms.readByte(self._pc.get ())
-        self._pc.inc ()
-        self._rc.inc ()
+        opcode = sms.readByte(self._pc)
+        self._pc = (self._pc + 1) & 0xFFFF
+        self._rc = (self._rc + 1) & 0xFF
 
         x = (opcode & 0xC0) >> 6
         y = (opcode & 0x38) >> 3
@@ -149,56 +131,65 @@ class Z80(object) :
 
                 # EX AF, AF'
                 elif y == 1 :
-                    t = self._registers[R_AF].get ()
-                    self._registers[R_AF].set (self._shadow_registers[R_AF].get ())
-                    self._shadow_registers[R_AF].set (t)
+                    self._a, self._sa = self._sa, self._a
+                    self._f, self._sf = self._sf, self._f
                     return 4
 
                 # DJNZ *
                 elif y == 2 :
 
-                    displacement = sms.readByte(self._pc.get ())
-                    self._pc.inc ()
+                    displacement = sms.readByte(self._pc)
+                    self._pc = (self._pc + 1) & 0xFFFF
+                    self._b = (self._b - 1) & 0xFF
 
-                    b = self._registers[R_BC].getHi()
-                    b.dec ()
-
-                    if b.get () != 0 :
+                    if self._b != 0 :
                         # TODO displacement will be unsigned byte.
                         # TODO Need to convert to signed value.
-                        self._pc.add (displacement)
+                        self._pc = (self._pc + displacement) & 0xFFFF
                         return 13
 
                     return 8
 
                 # JR *
                 elif y == 3 :
-                    displacement = sms.readByte(self._pc.get ())
-                    self._pc.inc ()
-                    self._pc.add (displacement)
+                    displacement = sms.readByte(self._pc)
+                    # TODO displacement will be unsigned byte.
+                    # TODO Need to convert to signed value.
+                    self._pc = (self._pc + 1) & 0xFFFF
+                    self._pc = (self._pc + displacement) & 0xFFFF
                     return 12
 
-                # JR cc, *
                 elif y in (4, 5, 6, 7) :
-                    displacement = sms.readByte(self._pc.get ())
-                    self._pc.inc ()
-                    if self._test_cc (y-4) :
-                        self._pc.add (displacement)
-                        return 12
+
+                    displacement = sms.readByte(self._pc)
+                    self._pc = (self._pc + 1) & 0xFFFF
+
+                    #if self._test_cc (y-4) :
+                    #    self._pc.add (displacement)
+                    #    return 12
                     return 7
 
             elif z == 1 :
 
-                # LD reg, **
                 if q == 0 :
-                    w = sms.readWord (self._pc.get ())
-                    self._pc.inc (2)
-                    self._table_rp (p).set (w)
+
+                    r1, r2 = [
+                        (self._b, self._c),
+                        (self._d, self._e),
+                        (self._h, self._l),
+                        (self._a, self._f)
+                    ][p]                
+
+                    r1 = sms.readByte (self._pc)
+                    self._pc = (self._pc + 1) & 0xFFFF
+                    r2 = sms.readByte (self._pc)
+                    self._pc = (self._pc + 1) & 0xFFFF
+
                     return 10
 
                 # ADD HL, rp
                 elif q == 1 :
-                    self._table_rp(p).add (v)
+                    # self._table_rp(p).add (v)
                     # TODO Check overflow
                     return 11
 
