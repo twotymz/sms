@@ -43,6 +43,265 @@ class Z80(object) :
         self._sa = 0
         self._sf = 0
 
+        self._opcodes = [
+            self._nop,
+            self._ld_bc_nn,
+            self._ld_m_bc_a,
+            self._inc_bc,
+            self._inc_b,
+            self._dec_b,
+            self._ld_b_n,
+            self._rlca,
+            self._ex_af_af,
+            self._add_hl_bc,
+            self._ld_a_m_bc,
+            self._dec_bc,
+            self._inc_c,
+            self._dec_c,
+            self._ld_c_n,
+            self._rrca,
+            self._djnz,
+            self._ld_de_nn,
+            self._ld_m_de_a,
+            self._inc_de,
+            self._inc_d,
+            self._dec_d,
+            self._ld_d_n,
+            self._rla,
+            self._jr,
+            self._add_hl_de,
+            self._ld_a_m_de,
+            self._dec_de,
+            self._inc_e,
+            self._dec_e,
+            self._ld_e_n,
+            self._rra,
+            self._jr_nz,
+            self._ld_hl_nn,
+            self._ld_m_nn_hl,
+            self._inc_hl,
+            self._inc_h,
+            self._dec_h,
+            self._ld_h_n,
+            self._daa,
+            self._jr_z,
+            self._add_hl_hl,
+            self._ld_hl_m_nn,
+            self._dec_hl,
+            self._inc_l,
+            self._dec_l,
+            self._ld_l_n,
+            self._cpl,
+            self._jr_nc,
+            self._ld_sp_nn,
+            self._ld_m_nn_a,
+            self._inc_sp,
+            self._inc_m_hl,
+            self._dec_m_hl,
+            self._ld_m_hl_n,
+            self._scf,
+            self._jr_c,
+            self._add_hl_sp,
+            self._ld_a_m_nn,
+            self._dec_sp,
+            self._inc_a,
+            self._dec_a,
+            self._ld_a_n,
+            self._ccf,
+            self._ld_b_b,
+            self._ld_b_c,
+            self._ld_b_d,
+            self._ld_b_e,
+            self._ld_b_h,
+            self._ld_b_l,
+            self._ld_b_m_hl,
+            self._ld_b_a,
+            self._ld_c_b,
+            self._ld_c_c,
+            self._ld_c_d,
+            self._ld_c_e,
+            self._ld_c_h,
+            self._ld_c_l,
+            self._ld_c_m_hl,
+            self._ld_c_a,
+            self._ld_d_b,
+            self._ld_d_c,
+            self._ld_d_d,
+            self._ld_d_e,
+            self._ld_d_h,
+            self._ld_d_l,
+            self._ld_d_m_hl,
+            self._ld_d_a,
+            self._ld_e_b,
+            self._ld_e_c,
+            self._ld_e_d,
+            self._ld_e_e,
+            self._ld_e_h,
+            self._ld_e_l,
+            self._ld_e_m_hl,
+            self._ld_e_a,
+            self._ld_h_b,
+            self._ld_h_c,
+            self._ld_h_d,
+            self._ld_h_e,
+            self._ld_h_h,
+            self._ld_h_l,
+            self._ld_h_m_hl,
+            self._ld_h_a,
+            self._ld_l_b,
+            self._ld_l_c,
+            self._ld_l_d,
+            self._ld_l_e,
+            self._ld_l_h,
+            self._ld_l_l,
+            self._ld_l_m_hl,
+            self._ld_l_a,
+            self._ld_m_hl_b,
+            self._ld_m_hl_c,
+            self._ld_m_hl_d,
+            self._ld_m_hl_e,
+            self._ld_m_hl_h,
+            self._ld_m_hl_l,
+            self._halt,
+            self._ld_m_hl_a,
+            self._ld_a_b,
+            self._ld_a_c,
+            self._ld_a_d,
+            self._ld_a_e,
+            self._ld_a_h,
+            self._ld_a_l,
+            self._ld_a_m_hl,
+            self._ld_a_a,
+            self._add_a_b,
+            self._add_a_c,
+            self._add_a_d,
+            self._add_a_e,
+            self._add_a_h,
+            self._add_a_l,
+            self._add_a_m_hl,
+            self._add_a_a,
+            self._adc_a_b,
+            self._adc_a_c,
+            self._adc_a_d,
+            self._adc_a_e,
+            self._adc_a_h,
+            self._adc_a_l,
+            self._adc_a_m_hl,
+            self._adc_a_a,
+            self._sub_b,
+            self._sub_c,
+            self._sub_d,
+            self._sub_e,
+            self._sub_h,
+            self._sub_l,
+            self._sub_m_hl,
+            self._sub_a,
+            self._sbc_a_b,
+            self._sbc_a_c,
+            self._sbc_a_d,
+            self._sbc_a_e,
+            self._sbc_a_h,
+            self._sbc_a_l,
+            self._sbc_a_m_hl,
+            self._sbc_a_a,
+            self._and_b,
+            self._and_c,
+            self._and_d,
+            self._and_e,
+            self._and_h,
+            self._and_l,
+            self._and_m_hl,
+            self._and_a,
+            self._xor_b,
+            self._xor_c,
+            self._xor_d,
+            self._xor_e,
+            self._xor_h,
+            self._xor_l,
+            self._xor_m_hl,
+            self._xor_a,
+            self._or_b,
+            self._or_c,
+            self._or_d,
+            self._or_e,
+            self._or_h,
+            self._or_l,
+            self._or_m_hl,
+            self._or_a,
+            self._cp_b,
+            self._cp_c,
+            self._cp_d,
+            self._cp_e,
+            self._cp_h,
+            self._cp_l,
+            self._cp_m_hl,
+            self._cp_a,
+            self._ret_nz,
+            self._pop_bc,
+            self._jp_nz,
+            self._jp,
+            self._call_nz,
+            self._push_bc,
+            self._add_a_n,
+            self._rst_00,
+            self._ret_z,
+            self._ret,
+            self._jp_z,
+            self._cb_prefix,
+            self._call_z,
+            self._call,
+            self._adc_a_n,
+            self._rst_08,
+            self._ret_nc,
+            self._pop_de,
+            self._jp_nc,
+            self._out_m_nn_a,
+            self._call_nc,
+            self._push_de,
+            self._sub_n,
+            self._rst_10,
+            self._ret_c,
+            self._exx,
+            self._jp_c,
+            self._in_a_m_n,
+            self._call_c,
+            self._dd_prefix,
+            self._sbc_a_n,
+            self._rst_18,
+            self._ret_po,
+            self._pop_hl,
+            self._jp_po,
+            self._ex_m_sp_hl,
+            self._call_po,
+            self._push_hl,
+            self._and_n,
+            self._rst_20,
+            self._ret_pe,
+            self._jp_m_hl,
+            self._jp_pe,
+            self._ex_de_hl,
+            self._call_pe,
+            self._ed_prefix,
+            self._xor_n,
+            self._rst_28,
+            self._ret_p,
+            self._pop_af,
+            self._jp_p,
+            self._di,
+            self._call_p,
+            self._push_af,
+            self._or_n,
+            self._rst_30,
+            self._ret_m,
+            self._ld_sp_hl,
+            self._jp_m,
+            self._ei,
+            self._call_m,
+            self._fd_prefix,
+            self._cp_n,
+            self._rst_38
+        ]
+
     # Given two unsigned 8 bit values, make a 16 bit value.
     def _mw (self, h, l) : return h << 8 | l
 
@@ -53,9 +312,7 @@ class Z80(object) :
     def _nn (self) : return self._mw (self._n (), self._n ())
 
     # Get a displacement value (-128 to 127)
-    def _displacement(self) :
-        b = self._n ()
-        return b if b <= 127 else (256 - b) * -1
+    def _displacement(self) : b = self._n (); return b if b <= 127 else (256 - b) * -1
 
     # Shorthand to access register pairs.
     def _bc (self) : return self._mw (self._b, self._c)
@@ -72,7 +329,7 @@ class Z80(object) :
     def _ld_a_e (self) : self._a = self._e
     def _ld_a_h (self) : self._a = self._h
     def _ld_a_l (self) : self._a = self._l
-    def _ld_a_i (self) : self._a = self._i
+    def _ld_a_i (self) : self._a = self._i;
     def _ld_a_r (self) : self._a = self._r
     def _ld_a_ixh (self) : self._a = self._ixh
     def _ld_a_ixl (self) : self._a = self._ixl
@@ -250,23 +507,49 @@ class Z80(object) :
     def _ld_m_nn_ix (self) : a = self._nn(); sms.writeByte (a, self._ixh); sms.writeByte (a+1, self._ixl)
     def _ld_m_nn_iy (self) : a = self._nn(); sms.writeByte (a, self._iyh); sms.writeByte (a+1, self._iyl)
 
-    def _jp (self) : pass
+    def _jp (self) : self._pc = self._nn ()
+    def _jp_c (self) : pass
+    def _jp_nc (self) : pass
+    def _jp_z (self) : pass
+    def _jp_nz (self) : pass
+    def _jp_m (self) : pass
+    def _jp_p (self) : pass
+    def _jp_pe (self) : pass
+    def _jp_po (self) : pass
     def _jp_m_hl (self) : pass
     def _jp_m_ix (self) : pass
     def _jp_m_iy (self) : pass
-    def _jp_nz (self) : pass
-    def _jp_z (self) : pass
-    def _jp_nc (self) : pass
-    def _jp_po (self) : pass
-    def _jp_pe (self) : pass
-    def _jp_p (self) : pass
-    def _jp_m (self) : pass
     def _jr (self) : d = self._displacement (); self._pc = (self._pc + d) & 0xFFFF
-    def _jr_nz (self) : pass
-    def _jr_z (self) : pass
-    def _jr_nc (self) : pass
     def _jr_c (self) : pass
-    def _djnz (self) : pass
+    def _jr_nc (self) : pass
+    def _jr_z (self) : pass
+    def _jr_nz (self) : pass
+
+    def _djnz (self) :
+        d = self._displacement ()
+        self._b = (self._b - 1) & 0xFF
+        if self._b != 0 :
+            self._pc = (self._pc + d) & 0xFFFF
+
+    def _call (self) : pass
+    def _call_c (self) : pass
+    def _call_nc (self) : pass
+    def _call_z (self) : pass
+    def _call_nz (self) : pass
+    def _call_m (self) : pass
+    def _call_p (self) : pass
+    def _call_pe (self) : pass
+    def _call_po (self) : pass
+
+    def _ret (self) : pass
+    def _ret_z (self) : pass
+    def _ret_nz (self) : pass
+    def _ret_c (self) : pass
+    def _ret_nc (self) : pass
+    def _ret_m (self) : pass
+    def _ret_p (self) : pass
+    def _ret_pe (self) : pass
+    def _ret_po (self) : pass
 
     def _inc_a (self) : pass
     def _inc_b (self) : pass
@@ -280,12 +563,12 @@ class Z80(object) :
     def _inc_m_hl (self) : pass
     def _inc_m_ixn (self) : pass
     def _inc_m_iyn (self) : pass
-    def _inc_bc (self) : pass
-    def _inc_de (self) : pass
-    def _inc_hl (self) : pass
-    def _inc_ix (self) : pass
-    def _inc_iy (self) : pass
-    def _inc_sp (self) : pass
+    def _inc_bc (self) : self._c = (self._c + 1) & 0xFF; if self._c == 0 : self._b = (self._b + 1) & 0xFF
+    def _inc_de (self) : self._e = (self._e + 1) & 0xFF; if self._e == 0 : self._d = (self._d + 1) & 0xFF
+    def _inc_hl (self) : self._l = (self._l + 1) & 0xFF; if self._l == 0 : self._h = (self._h + 1) & 0xFF
+    def _inc_ix (self) : self._ixl = (self._ixl + 1) & 0xFF; if self._ixl == 0 : self._ixh = (self._ixh + 1) & 0xFF
+    def _inc_iy (self) : self._iyl = (self._iyl + 1) & 0xFF; if self._iyl == 0 : self._iyh = (self._iyh + 1) & 0xFF
+    def _inc_sp (self) : self._sp = (self._sp + 1) & 0xFFFF
 
     def _dec_a (self) : pass
     def _dec_b (self) : pass
@@ -299,209 +582,211 @@ class Z80(object) :
     def _dec_m_hl (self) : pass
     def _dec_m_ixn (self) : pass
     def _dec_m_iyn (self) : pass
-    def _dec_bc (self) : pass
-    def _dec_de (self) : pass
-    def _dec_hl (self) : pass
-    def _dec_ix (self) : pass
-    def _dec_iy (self) : pass
-    def _dec_sp (self) : pass
+    def _dec_bc (self) : self._c = (self._c - 1) & 0xFF; if self._c == 0xFF : self._b = (self._b - 1) & 0xFF
+    def _dec_de (self) : self._e = (self._e - 1) & 0xFF; if self._e == 0xFF : self._d = (self._d - 1) & 0xFF
+    def _dec_hl (self) : self._l = (self._l - 1) & 0xFF; if self._l == 0xFF : self._h = (self._h - 1) & 0xFF
+    def _dec_ix (self) : self._ixl = (self._ixl - 1) & 0xFF; if self._ixl == 0xFF : self._ixh = (self._ixh - 1) & 0xFF
+    def _dec_iy (self) : self._iyl = (self._iyl - 1) & 0xFF; if self._iyl == 0xFF : self._iyh = (self._iyh - 1) & 0xFF
+    def _dec_sp (self) : self._sp = (self._sp - 1) & 0xFFFF
 
-    
+    def _add_a_a (self) : pass
+    def _add_a_b (self) : pass
+    def _add_a_c (self) : pass
+    def _add_a_d (self) : pass
+    def _add_a_e (self) : pass
+    def _add_a_h (self) : pass
+    def _add_a_l (self) : pass
+    def _add_a_ixh (self) : pass
+    def _add_a_ixl (self) : pass
+    def _add_a_iyh (self) : pass
+    def _add_a_iyl (self) : pass
+    def _add_a_m_hl (self) : pass
+    def _add_a_m_ixn (self) : pass
+    def _add_a_m_iyn (self) : pass
+    def _add_a_n (self) : pass
+    def _add_hl_bc (self) : pass
+    def _add_hl_de (self) : pass
+    def _add_hl_hl (self) : pass
+    def _add_hl_sp (self) : pass
+    def _add_ix_bc (self) : pass
+    def _add_ix_de (self) : pass
+    def _add_ix_ix (self) : pass
+    def _add_ix_sp (self) : pass
+    def _add_iy_bc (self) : pass
+    def _add_iy_de (self) : pass
+    def _add_iy_iy (self) : pass
+    def _add_iy_sp (self) : pass
+
+    def _sub_a (self) : pass
+    def _sub_b (self) : pass
+    def _sub_c (self) : pass
+    def _sub_d (self) : pass
+    def _sub_e (self) : pass
+    def _sub_h (self) : pass
+    def _sub_l (self) : pass
+    def _sub_n (self) : pass
+    def _sub_m_hl (self) : pass
+    def _sub_m_ixn (self) : pass
+    def _sub_m_iyn (self) : pass
+
+    def _adc_a_a (self) : pass
+    def _adc_a_b (self) : pass
+    def _adc_a_c (self) : pass
+    def _adc_a_d (self) : pass
+    def _adc_a_e (self) : pass
+    def _adc_a_h (self) : pass
+    def _adc_a_l (self) : pass
+    def _adc_a_ixh (self) : pass
+    def _adc_a_ixl (self) : pass
+    def _adc_a_iyh (self) : pass
+    def _adc_a_iyl (self) : pass
+    def _adc_a_m_hl (self) : pass
+    def _adc_a_m_ixn (self) : pass
+    def _adc_a_m_iyn (self) : pass
+    def _adc_a_n (self) : pass
+    def _adc_hl_bc (self) : pass
+    def _adc_hl_de (self) : pass
+    def _adc_hl_hl (self) : pass
+    def _adc_hl_sp (self) : pass
+
+    def _sbc_a_a (self) : pass
+    def _sbc_a_b (self) : pass
+    def _sbc_a_c (self) : pass
+    def _sbc_a_d (self) : pass
+    def _sbc_a_e (self) : pass
+    def _sbc_a_h (self) : pass
+    def _sbc_a_l (self) : pass
+    def _sbc_a_ixh (self) : pass
+    def _sbc_a_ixl (self) : pass
+    def _sbc_a_iyh (self) : pass
+    def _sbc_a_iyl (self) : pass
+    def _sbc_a_m_hl (self) : pass
+    def _sbc_a_m_ixn (self) : pass
+    def _sbc_a_m_iyn (self) : pass
+    def _sbc_a_n (self) : pass
+    def _sbc_hl_bc (self) : pass
+    def _sbc_hl_de (self) : pass
+    def _sbc_hl_hl (self) : pass
+    def _sbc_hl_sp (self) : pass
+
+    def _cp_a (self) : pass
+    def _cp_b (self) : pass
+    def _cp_c (self) : pass
+    def _cp_d (self) : pass
+    def _cp_e (self) : pass
+    def _cp_h (self) : pass
+    def _cp_l (self) : pass
+    def _cp_ixh (self) : pass
+    def _cp_ixl (self) : pass
+    def _cp_iyh (self) : pass
+    def _cp_iyl (self) : pass
+    def _cp_m_hl (self) : pass
+    def _cp_m_ixn (self) : pass
+    def _cp_m_iyn (self) : pass
+    def _cp_n (self) : pass
+
+    def _or_a (self) : pass
+    def _or_b (self) : pass
+    def _or_c (self) : pass
+    def _or_d (self) : pass
+    def _or_e (self) : pass
+    def _or_h (self) : pass
+    def _or_l (self) : pass
+    def _or_ixh (self) : pass
+    def _or_ixl (self) : pass
+    def _or_iyh (self) : pass
+    def _or_iyl (self) : pass
+    def _or_m_hl (self) : pass
+    def _or_m_ixn (self) : pass
+    def _or_m_iyn (self) : pass
+    def _or_n (self) : pass
+
+    def _xor_a (self) : pass
+    def _xor_b (self) : pass
+    def _xor_c (self) : pass
+    def _xor_d (self) : pass
+    def _xor_e (self) : pass
+    def _xor_h (self) : pass
+    def _xor_l (self) : pass
+    def _xor_ixh (self) : pass
+    def _xor_ixl (self) : pass
+    def _xor_iyh (self) : pass
+    def _xor_iyl (self) : pass
+    def _xor_m_hl (self) : pass
+    def _xor_m_ixn (self) : pass
+    def _xor_m_iyn (self) : pass
+    def _xor_n (self) : pass
+
+    def _and_a (self) : pass
+    def _and_b (self) : pass
+    def _and_c (self) : pass
+    def _and_d (self) : pass
+    def _and_e (self) : pass
+    def _and_h (self) : pass
+    def _and_l (self) : pass
+    def _and_ixh (self) : pass
+    def _and_ixl (self) : pass
+    def _and_iyh (self) : pass
+    def _and_iyl (self) : pass
+    def _and_m_hl (self) : pass
+    def _and_m_ixn (self) : pass
+    def _and_m_iyn (self) : pass
+    def _and_n (self) : pass
+
+    def _push_af (self) : pass
+    def _push_bc (self) : pass
+    def _push_de (self) : pass
+    def _push_hl (self) : pass
+    def _push_ix (self) : pass
+    def _push_iy (self) : pass
+
+    def _pop_af (self) : pass
+    def _pop_bc (self) : pass
+    def _pop_de (self) : pass
+    def _pop_hl (self) : pass
+    def _pop_ix (self) : pass
+    def _pop_iy (self) : pass
+
+    def _in_a_m_n (self) : pass
+
+    def _rst_00 (self) : pass
+    def _rst_08 (self) : pass
+    def _rst_10 (self) : pass
+    def _rst_18 (self) : pass
+    def _rst_20 (self) : pass
+    def _rst_28 (self) : pass
+    def _rst_30 (self) : pass
+    def _rst_38 (self) : pass
+
+    def _rlca (self) : pass
+    def _rrca (self) : pass
+    def _rla (self) : pass
+    def _rra (self) : pass
+    def _daa (self) : pass
+    def _cpl (self) : pass
+    def _scf (self) : pass
+    def _ccf (self) : pass
+
+    def _out_m_nn_a (self) : pass
+
+    def _di (self) : pass
+    def _ei (self) : pass
 
     def _nop (self) : pass
     def _halt (self) : pass
 
     def _ex_af_af (self) : self._a, self._sa = self._sa, self._a; self._f, self._sf = self._sf, self._f
+    def _ex_de_hl (self) : self._d, self._h = self._h, self._d; self._e, self._l = self._l, self._e
+    def _exx (self) : pass
+    def _ex_m_sp_hl (self) : pass
+
+    def _cb_prefix (self) : pass
+    def _dd_prefix (self) : pass
+    def _ed_prefix (self) : pass
+    def _fd_prefix (self) : pass
 
     # Returns the number of clock cycles.
     def run(self) :
-
         opcode = self._n ()
         self._rc = (self._rc + 1) & 0xFF
-
-        x = (opcode & 0xC0) >> 6
-        y = (opcode & 0x38) >> 3
-        z = (opcode & 0x7)
-        p = y >> 1
-        q = y & 0x1
-
-        if x == 0 :
-
-            if z == 0 :
-
-                # NOP
-                if y == 0 :
-                    return 4
-
-                # EX AF, AF'
-                elif y == 1 :
-                    self._ex_af_af ()
-                    return 4
-
-                # DJNZ *
-                elif y == 2 :
-                    d = self._displacement ()
-                    self._b = (self._b - 1) & 0xFF
-                    if self._b != 0 :
-                        self._pc = (self._pc + d) & 0xFFFF
-                        return 13
-                    return 8
-
-                # JR *
-                elif y == 3 :
-                    self._pc = (self._pc + self._displacement ()) & 0xFFFF
-                    return 12
-
-                elif y in (4, 5, 6, 7) :
-                    #displacement = self._n ()
-                    #if self._test_cc (y-4) :
-                    #    self._pc.add (displacement)
-                    #    return 12
-                    return 7
-
-            elif z == 1 :
-
-                if q == 0 :
-                    if p == 0 :
-                        self._ld_bc_nn ()
-                    elif p == 1 :
-                        self._ld_de_nn ()
-                    elif p == 2 :
-                        self._ld_hl_nn ()
-                    elif p == 3 :
-                        self._ld_sp_nn ()
-                    return 10
-
-                # ADD HL, rp
-                elif q == 1 :
-                    # TODO
-                    return 11
-
-            elif z == 2 :
-
-                if q == 0 :
-
-                    # LD (BC), A
-                    if p == 0 :
-                        self._ld_m_bc_a ()
-                        return 7
-
-                    # LD (DE), A
-                    elif p == 1 :
-                        self._ld_m_de_a ()
-                        return 7
-
-                    # LD (**), HL
-                    elif p == 2 :
-                        self._ld_m_nn_hl ()
-                        return 16
-
-                    # LD (**), A
-                    elif p == 3 :
-                        self._ld_m_nn_a ()
-                        return 13
-
-                elif q == 1 :
-
-                    # LD A, (BC)
-                    if p == 0 :
-                        self._ld_a_m_bc ()
-                        return 7
-
-                    # LD A, (DE)
-                    elif p == 1 :
-                        self._ld_a_m_de ()
-                        return 7
-
-                    # LD HL, (**)
-                    elif p == 2 :
-                        self._ld_hl_m_nn ()
-                        return 16
-
-                    # LD A, (**)
-                    elif p == 3 :
-                        self._ld_a_m_nn ()
-                        return 13
-
-            elif z == 3 :
-
-                # INC rp
-                if q == 0 :
-                    #self._table_rp(p).inc ()
-                    return 6
-
-                # DEC rp
-                elif q == 1 :
-                    #self._table_rp(p).dec ()
-                    return 6
-
-            # INC r
-            elif z == 4 :
-                # TODO
-                #self._inc_pc ()
-                return 4
-
-            # DEC r
-            elif z == 5 :
-                # TODO
-                #self._inc_pc ()
-                return 4
-
-            # LD r, *
-            elif z == 6 :
-                if y == 0 :
-                    self._ld_b_n ()
-                elif y == 1 :
-                    self._ld_c_n ()
-                elif y == 2 :
-                    self._ld_d_n ()
-                elif y == 3 :
-                    self._ld_e_n ()
-                elif y == 4 :
-                    self._ld_h_n ()
-                elif y == 5 :
-                    self._ld_l_n ()
-                elif y == 6 :
-                    self._ld_m_hl_n ()
-                elif y == 7 :
-                    self._ld_a_n ()
-                return 7
-
-            elif z == 7 :
-
-                # RLCA
-                if y == 0 :
-                    pass
-
-                # RRCA
-                elif y == 1 :
-                    pass
-
-                # RLA
-                elif y == 2 :
-                    pass
-
-                # RRA
-                elif y == 3 :
-                    pass
-
-                # DAA
-                elif y == 4 :
-                    pass
-
-                # CPL
-                elif y == 5 :
-                    pass
-
-                # SCF
-                elif y == 6 :
-                    pass
-
-                # CCF
-                elif y == 7 :
-                    pass
-
-                return 4
-
-        print 'Unhandled opcode {0:X}'.format (opcode)
-        raise Exception
+        self._opcodes[opcode]()
