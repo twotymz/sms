@@ -1,47 +1,38 @@
 
-R_BC = 0
-R_DE = 1
-R_HL = 2
-R_AF = 3
-
-F_C = 0
-F_N = 1
-F_P = 2
-F_H = 4
-F_Z = 6
-F_S = 7
-
 class Z80(object) :
 
     def __init__(self) :
 
-        self._pc  = 0
-        self._sph = 0
-        self._spl = 0
-        self._iv  = 0
-        self._rc  = 0
-        self._i   = 0
-        self._r   = 0
-
-        # Registers
+        # Main registers
         self._b = 0
         self._c = 0
         self._d = 0
         self._e = 0
         self._a = 0
         self._f = 0
+
+        # Alternate registers
+        self._ab = 0
+        self._ac = 0
+        self._ad = 0
+        self._ae = 0
+        self._aa = 0
+        self._af = 0
+
+        # Index registers
         self._ixh = 0
         self._ixl = 0
         self._iyh = 0
         self._iyl = 0
+        self._sph = 0
+        self._spl = 0
 
-        # Shadow registers
-        self._sb = 0
-        self._sc = 0
-        self._sd = 0
-        self._se = 0
-        self._sa = 0
-        self._sf = 0
+        # Other registers
+        self._i = 0       # interrupt vector
+        self._r = 0       # refresh counter
+
+        # Program counter
+        self._pc  = 0
 
         self._opcodes = [
             self._nop,
@@ -311,8 +302,8 @@ class Z80(object) :
     # Get the next word at pc incrementing pc.
     def _nn (self) : return self._mw (self._n (), self._n ())
 
-    # Get a displacement value (-128 to 127)
-    def _displacement(self) : b = self._n (); return b if b <= 127 else (256 - b) * -1
+    # Get the next byte at _pc and turn it in to a signed value (-128 to 127)
+    def _sn(self) : b = self._n (); return b if b <= 127 else (256 - b) * -1
 
     # Shorthand to access register pairs.
     def _bc (self) : return self._mw (self._b, self._c)
@@ -519,14 +510,14 @@ class Z80(object) :
     def _jp_m_hl (self) : pass
     def _jp_m_ix (self) : pass
     def _jp_m_iy (self) : pass
-    def _jr (self) : d = self._displacement (); self._pc = (self._pc + d) & 0xFFFF
+    def _jr (self) : self._pc = (self._pc + self._sn ()) & 0xFFFF
     def _jr_c (self) : pass
     def _jr_nc (self) : pass
     def _jr_z (self) : pass
     def _jr_nz (self) : pass
 
     def _djnz (self) :
-        d = self._displacement ()
+        d = self._sb ()
         self._b = (self._b - 1) & 0xFF
         if self._b != 0 :
             self._pc = (self._pc + d) & 0xFFFF
@@ -775,7 +766,7 @@ class Z80(object) :
     def _nop (self) : pass
     def _halt (self) : pass
 
-    def _ex_af_af (self) : self._a, self._sa = self._sa, self._a; self._f, self._sf = self._sf, self._f
+    def _ex_af_af (self) : self._a, self._aa = self._aa, self._a; self._f, self._af = self._af, self._f
     def _ex_de_hl (self) : self._d, self._h = self._h, self._d; self._e, self._l = self._l, self._e
     def _exx (self) : pass
     def _ex_m_sp_hl (self) : pass
@@ -788,5 +779,5 @@ class Z80(object) :
     # Returns the number of clock cycles.
     def run(self) :
         opcode = self._n ()
-        self._rc = (self._rc + 1) & 0xFF
+        self._r = (self._r + 1) & 0xFF
         self._opcodes[opcode]()
