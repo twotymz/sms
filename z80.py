@@ -1,7 +1,10 @@
 
 class Z80(object) :
 
-    def __init__(self) :
+    def __init__(self, memory, io) :
+
+        self._memory = memory
+        self._io = io
 
         # Main registers
         self._b = 0
@@ -33,6 +36,9 @@ class Z80(object) :
 
         # Program counter
         self._pc  = 0
+
+        # The bytes the makeup the current instruction.
+        self._instruction = []
 
         self._opcodes = [
             self._nop,
@@ -297,13 +303,27 @@ class Z80(object) :
     def _mw (self, h, l) : return h << 8 | l
 
     # Get the next byte at pc then incrementing pc.
-    def _n (self) : b = sms.readByte (self._pc); self._pc = (self._pc + 1) & 0xFFFF; return b
+    def _n (self) :
+        b = self._memory.read (self._pc);
+        self._instruction.append (b);
+        self._pc = (self._pc + 1) & 0xFFFF;
+        return b
 
     # Get the next word at pc incrementing pc.
     def _nn (self) : return self._mw (self._n (), self._n ())
 
     # Get the next byte at _pc and turn it in to a signed value (-128 to 127)
     def _sn(self) : b = self._n (); return b if b <= 127 else (256 - b) * -1
+
+    # Set/unset flags. 1 to set, 0 to unset, None to leave alone
+    def _set_f(self, s=None, z=None, h=None, p=None, n=None, c=None) :
+        if s is not None : self._f = (self._f & 0xBF) | (v << 7)
+        if z is not None : self._f = (self._f & 0xDF) | (v << 6)
+        if h is not None : self._f = (self._f & 0xF7) | (v << 4)
+        if p is not None : self._f = (self._f & 0xFB) | (v << 2)
+        if n is not None : self._f = (self._f & 0xFD) | (v << 1)
+        if c is not None : self._f = (self._f & 0xFE) | v
+
 
     # Shorthand to access register pairs.
     def _bc (self) : return self._mw (self._b, self._c)
@@ -326,13 +346,13 @@ class Z80(object) :
     def _ld_a_ixl (self) : self._a = self._ixl
     def _ld_a_iyh (self) : self._a = self._iyh
     def _ld_a_iyl (self) : self._a = self._iyl
-    def _ld_a_m_bc (self) : self._a = sms.readByte (self._bc ())
-    def _ld_a_m_de (self) : self._a = sms.readByte (self._de ())
-    def _ld_a_m_hl (self) : self._a = sms.readByte (self._hl ())
+    def _ld_a_m_bc (self) : self._a = io.readByte (self._bc ())
+    def _ld_a_m_de (self) : self._a = io.readByte (self._de ())
+    def _ld_a_m_hl (self) : self._a = io.readByte (self._hl ())
     def _ld_a_m_ixn (self) : pass
     def _ld_a_m_iyn (self) : pass
     def _ld_a_n (self) : self._a = self._n ()
-    def _ld_a_m_nn (self) : self._a = sms.readByte (self._nn ())
+    def _ld_a_m_nn (self) : self._a = io.readByte (self._nn ())
     def _ld_b_a (self) : self._b = self._a
     def _ld_b_b (self) : self._b = self._b
     def _ld_b_c (self) : self._b = self._c
@@ -344,7 +364,7 @@ class Z80(object) :
     def _ld_b_ixl (self) : self._b = self._ixl
     def _ld_b_iyh (self) : self._b = self._iyh
     def _ld_b_iyl (self) : self._b = self._iyl
-    def _ld_b_m_hl (self) : self._b = sms.readByte (self._hl ())
+    def _ld_b_m_hl (self) : self._b = io.readByte (self._hl ())
     def _ld_b_m_ixn (self) : pass
     def _ld_b_m_iyn (self) : pass
     def _ld_b_n (self) : self._b = self._n ()
@@ -359,7 +379,7 @@ class Z80(object) :
     def _ld_c_ixl (self) : self._c = self._ixl
     def _ld_c_iyh (self) : self._c = self._iyh
     def _ld_c_iyl (self) : self._c = self._iyl
-    def _ld_c_m_hl (self) : self._c = sms.readByte (self._hl ())
+    def _ld_c_m_hl (self) : self._c = io.readByte (self._hl ())
     def _ld_c_m_ixn (self) : pass
     def _ld_c_m_iyn (self) : pass
     def _ld_c_n (self) : self._c = self._n ()
@@ -374,7 +394,7 @@ class Z80(object) :
     def _ld_d_ixl (self) : self._d = self._ixl
     def _ld_d_iyh (self) : self._d = self._iyh
     def _ld_d_iyl (self) : self._d = self._iyl
-    def _ld_d_m_hl (self) : self._d = sms.readByte (self._hl ())
+    def _ld_d_m_hl (self) : self._d = io.readByte (self._hl ())
     def _ld_d_m_ixn (self) : pass
     def _ld_d_m_iyn (self) : pass
     def _ld_d_n (self) : self._d = self._n ()
@@ -389,7 +409,7 @@ class Z80(object) :
     def _ld_e_ixl (self) : self._e = self._ixl
     def _ld_e_iyh (self) : self._e = self._iyh
     def _ld_e_iyl (self) : self._e = self._iyl
-    def _ld_e_m_hl (self) : self._e = sms.readByte (self._hl ())
+    def _ld_e_m_hl (self) : self._e = io.readByte (self._hl ())
     def _ld_e_m_ixn (self) : pass
     def _ld_e_m_iyn (self) : pass
     def _ld_e_n (self) : self._e = self._n ()
@@ -404,7 +424,7 @@ class Z80(object) :
     def _ld_h_ixl (self) : self._h = self._ixl
     def _ld_h_iyh (self) : self._h = self._iyh
     def _ld_h_iyl (self) : self._h = self._iyl
-    def _ld_h_m_hl (self) : self._h = sms.readByte (self._hl ())
+    def _ld_h_m_hl (self) : self._h = io.readByte (self._hl ())
     def _ld_h_m_ixn (self) : pass
     def _ld_h_m_iyn (self) : pass
     def _ld_h_n (self) : self._h = self._n ()
@@ -419,7 +439,7 @@ class Z80(object) :
     def _ld_l_ixl (self) : self._l = self._ixl
     def _ld_l_iyh (self) : self._l = self._iyh
     def _ld_l_iyl (self) : self._l = self._iyl
-    def _ld_l_m_hl (self) : self._l = sms.readByte (self._hl ())
+    def _ld_l_m_hl (self) : self._l = io.readByte (self._hl ())
     def _ld_l_m_ixn (self) : pass
     def _ld_l_m_iyn (self) : pass
     def _ld_l_n (self) : self._l = self._n ()
@@ -466,37 +486,37 @@ class Z80(object) :
     def _ld_iyl_iyl (self) : pass   # nop that lasts 9 t-states
     def _ld_iyl_n (self) : self._iyl = self._n()
     def _ld_bc_nn (self) : self._b = self._n (); self._c = self._n ()
-    def _ld_bc_m_nn (self) : a = self._nn(); self._b = sms.readByte (a); self._c = sms.readByte (a+1)
+    def _ld_bc_m_nn (self) : a = self._nn(); self._b = io.readByte (a); self._c = io.readByte (a+1)
     def _ld_de_nn (self) : self._d = self._n (); self._e = self._n ()
-    def _ld_de_m_nn (self) : a = self._nn(); self._d = sms.readByte (a); self._e = sms.readByte (a+1)
+    def _ld_de_m_nn (self) : a = self._nn(); self._d = io.readByte (a); self._e = io.readByte (a+1)
     def _ld_hl_nn (self) : self._h = self._n (); self._l = self._n ()
-    def _ld_hl_m_nn (self) : a = self._nn(); self._h = sms.readByte (a); self._l = sms.readByte (a+1)
+    def _ld_hl_m_nn (self) : a = self._nn(); self._h = io.readByte (a); self._l = io.readByte (a+1)
     def _ld_sp_hl (self) : self._sph = self._h; self._spl = self._l
     def _ld_sp_ix (self) : self._sph = self._ixh; self._spl = self._ixl
     def _ld_sp_iy (self) : self._sph = self._iyh; self._spl = self._iyl
     def _ld_sp_nn (self) : self._sph = self._n (); self._spl = self._n ()
-    def _ld_sp_m_nn (self) : a = self._nn(); self._sph = sms.readByte (a); self._spl = sms.readByte (a+1)
+    def _ld_sp_m_nn (self) : a = self._nn(); self._sph = io.readByte (a); self._spl = io.readByte (a+1)
     def _ld_ix_nn (self) : self._ixh = self._n(); self._ixl = self._n ()
-    def _ld_ix_m_nn (self) : a = self._nn (); self._ixh = sms.readByte (a); self._ixl = sms.readByte (a+1)
+    def _ld_ix_m_nn (self) : a = self._nn (); self._ixh = io.readByte (a); self._ixl = io.readByte (a+1)
     def _ld_iy_nn (self) : self._iyh = self._n(); self._iyl = self._n ()
-    def _ld_iy_m_nn (self) : a = self._nn(); self._iyh = sms.readByte (a); self._iyl = sms.readByte (a+1)
-    def _ld_m_bc_a (self) : sms.writeByte (self._bc (), self._a)
-    def _ld_m_de_a (self) : sms.writeByte (self._de (), self._a)
-    def _ld_m_hl_a (self) : sms.writeByte (self._hl (), self._a)
-    def _ld_m_hl_b (self) : sms.writeByte (self._hl (), self._b)
-    def _ld_m_hl_c (self) : sms.writeByte (self._hl (), self._c)
-    def _ld_m_hl_d (self) : sms.writeByte (self._hl (), self._d)
-    def _ld_m_hl_e (self) : sms.writeByte (self._hl (), self._e)
-    def _ld_m_hl_h (self) : sms.writeByte (self._hl (), self._h)
-    def _ld_m_hl_l (self) : sms.writeByte (self._hl (), self._l)
-    def _ld_m_hl_n (self) : sms.writeByte (self._hl (), self._n())
-    def _ld_m_nn_a (self) : sms.writeByte (self._mw (self._n (), self._n()), self._a)
-    def _ld_m_nn_bc (self) : a = self._nn(); sms.writeByte (a, self._b); sms.writeByte (a+1, self._c)
-    def _ld_m_nn_de (self) : a = self._nn(); sms.writeByte (a, self._d); sms.writeByte (a+1, self._e)
-    def _ld_m_nn_hl (self) : a = self._nn(); sms.writeByte (a, self._h); sms.writeByte (a+1, self._l)
-    def _ld_m_nn_sp (self) : a = self._nn(); sms.writeByte (a, self._sph); sms.writeByte (a+1, self._spl)
-    def _ld_m_nn_ix (self) : a = self._nn(); sms.writeByte (a, self._ixh); sms.writeByte (a+1, self._ixl)
-    def _ld_m_nn_iy (self) : a = self._nn(); sms.writeByte (a, self._iyh); sms.writeByte (a+1, self._iyl)
+    def _ld_iy_m_nn (self) : a = self._nn(); self._iyh = io.readByte (a); self._iyl = io.readByte (a+1)
+    def _ld_m_bc_a (self) : io.writeByte (self._bc (), self._a)
+    def _ld_m_de_a (self) : io.writeByte (self._de (), self._a)
+    def _ld_m_hl_a (self) : io.writeByte (self._hl (), self._a)
+    def _ld_m_hl_b (self) : io.writeByte (self._hl (), self._b)
+    def _ld_m_hl_c (self) : io.writeByte (self._hl (), self._c)
+    def _ld_m_hl_d (self) : io.writeByte (self._hl (), self._d)
+    def _ld_m_hl_e (self) : io.writeByte (self._hl (), self._e)
+    def _ld_m_hl_h (self) : io.writeByte (self._hl (), self._h)
+    def _ld_m_hl_l (self) : io.writeByte (self._hl (), self._l)
+    def _ld_m_hl_n (self) : io.writeByte (self._hl (), self._n())
+    def _ld_m_nn_a (self) : io.writeByte (self._mw (self._n (), self._n()), self._a)
+    def _ld_m_nn_bc (self) : a = self._nn(); io.writeByte (a, self._b); io.writeByte (a+1, self._c)
+    def _ld_m_nn_de (self) : a = self._nn(); io.writeByte (a, self._d); io.writeByte (a+1, self._e)
+    def _ld_m_nn_hl (self) : a = self._nn(); io.writeByte (a, self._h); io.writeByte (a+1, self._l)
+    def _ld_m_nn_sp (self) : a = self._nn(); io.writeByte (a, self._sph); io.writeByte (a+1, self._spl)
+    def _ld_m_nn_ix (self) : a = self._nn(); io.writeByte (a, self._ixh); io.writeByte (a+1, self._ixl)
+    def _ld_m_nn_iy (self) : a = self._nn(); io.writeByte (a, self._iyh); io.writeByte (a+1, self._iyl)
 
     def _jp (self) : self._pc = self._nn ()
     def _jp_c (self) : pass
@@ -749,8 +769,8 @@ class Z80(object) :
     def _rst_30 (self) : pass
     def _rst_38 (self) : pass
 
-    def _rlca (self) : pass
-    def _rrca (self) : pass
+    def _rlca (self) : self._a = ((self._a << 1) | (self._a >> 7)) & 0xFF; self._set_f(h=0, c=(self._a & 0x1))
+    def _rrca (self) : self._a = ((self._a >> 1) | (self._a << 7)) & 0xFF; self._set_f(h=0, c=(self._a & 0x80) >> 7)
     def _rla (self) : pass
     def _rra (self) : pass
     def _daa (self) : pass
@@ -778,6 +798,9 @@ class Z80(object) :
 
     # Returns the number of clock cycles.
     def run(self) :
+
+        self._instruction = []
+
         opcode = self._n ()
         self._r = (self._r + 1) & 0xFF
         self._opcodes[opcode]()
