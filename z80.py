@@ -27,7 +27,8 @@ class Z80(object) :
         self._ixl = 0
         self._iyh = 0
         self._iyl = 0
-        self._sp  = 0
+        self._sph = 0
+        self._spl = 0
 
         # Other registers
         self._i = 0       # interrupt vector
@@ -323,12 +324,14 @@ class Z80(object) :
         if n is not None : self._f = (self._f & 0xFD) | (v << 1)
         if c is not None : self._f = (self._f & 0xFE) | v
 
+
     # Shorthand to access register pairs.
     def _bc (self) : return self._mw (self._b, self._c)
     def _de (self) : return self._mw (self._b, self._c)
     def _hl (self) : return self._mw (self._h, self._l)
     def _ix (self) : return self._mw (self._ixh, self._ixl)
     def _iy (self) : return self._mw (self._iyh, self._iyl)
+    def _sp (self) : return self._mw (self._sph, self._spl)
 
     def _ld_a_a (self) : self._a = self._a
     def _ld_a_b (self) : self._a = self._b
@@ -488,11 +491,11 @@ class Z80(object) :
     def _ld_de_m_nn (self) : a = self._nn(); self._d = io.readByte (a); self._e = io.readByte (a+1)
     def _ld_hl_nn (self) : self._h = self._n (); self._l = self._n ()
     def _ld_hl_m_nn (self) : a = self._nn(); self._h = io.readByte (a); self._l = io.readByte (a+1)
-    def _ld_sp_hl (self) : self._sp = self._mw (self._h, self._l)
-    def _ld_sp_ix (self) : self._sp = self._mw (self._ixh, self._ixl)
-    def _ld_sp_iy (self) : self._sp = self._mw (self._iyh, self._iyl)
-    def _ld_sp_nn (self) : self._sph = self._nn ()
-    def _ld_sp_m_nn (self) : a = self._nn(); self._sp = self._mw (io.readByte (a), io.readByte (a+1))
+    def _ld_sp_hl (self) : self._sph = self._h; self._spl = self._l
+    def _ld_sp_ix (self) : self._sph = self._ixh; self._spl = self._ixl
+    def _ld_sp_iy (self) : self._sph = self._iyh; self._spl = self._iyl
+    def _ld_sp_nn (self) : self._sph = self._n (); self._spl = self._n ()
+    def _ld_sp_m_nn (self) : a = self._nn(); self._sph = io.readByte (a); self._spl = io.readByte (a+1)
     def _ld_ix_nn (self) : self._ixh = self._n(); self._ixl = self._n ()
     def _ld_ix_m_nn (self) : a = self._nn (); self._ixh = io.readByte (a); self._ixl = io.readByte (a+1)
     def _ld_iy_nn (self) : self._iyh = self._n(); self._iyl = self._n ()
@@ -511,7 +514,7 @@ class Z80(object) :
     def _ld_m_nn_bc (self) : a = self._nn(); io.writeByte (a, self._b); io.writeByte (a+1, self._c)
     def _ld_m_nn_de (self) : a = self._nn(); io.writeByte (a, self._d); io.writeByte (a+1, self._e)
     def _ld_m_nn_hl (self) : a = self._nn(); io.writeByte (a, self._h); io.writeByte (a+1, self._l)
-    def _ld_m_nn_sp (self) : a = self._nn(); io.writeByte (a, self._sp & 0xFF00 >> 8); io.writeByte (a+1, self._sp & 0x00FF)
+    def _ld_m_nn_sp (self) : a = self._nn(); io.writeByte (a, self._sph); io.writeByte (a+1, self._spl)
     def _ld_m_nn_ix (self) : a = self._nn(); io.writeByte (a, self._ixh); io.writeByte (a+1, self._ixl)
     def _ld_m_nn_iy (self) : a = self._nn(); io.writeByte (a, self._iyh); io.writeByte (a+1, self._iyl)
 
@@ -539,29 +542,9 @@ class Z80(object) :
         if self._b != 0 :
             self._pc = (self._pc + d) & 0xFFFF
 
-    def _call (self) :
-        pc = self._nn ()
-        self._memory.write (self._sp-2, (self._pc & 0xFF00) >> 8)
-        self._memory.write (self._sp-1, self._pc & 0x00FF)
-        self._sp -= 2
-        self._pc = pc
-
-    def _call_c (self) :
-        pc = self._nn ()
-        if (self._f & 0x01) == 1 :
-            self._memory.write (self._sp-2, (self._pc & 0xFF00) >> 8)
-            self._memory.write (self._sp-1, self._pc & 0x00FF)
-            self._sp -= 2
-            self._pc = pc
-
-    def _call_nc (self) :
-        pc = self._nn ()
-        if (self._f & 0x01) == 0 :
-            self._memory.write (self._sp-2, (self._pc & 0xFF00) >> 8)
-            self._memory.write (self._sp-1, self._pc & 0x00FF)
-            self._sp -= 2
-            self._pc = pc
-
+    def _call (self) : pass
+    def _call_c (self) : pass
+    def _call_nc (self) : pass
     def _call_z (self) : pass
     def _call_nz (self) : pass
     def _call_m (self) : pass
@@ -617,13 +600,19 @@ class Z80(object) :
     def _dec_iy (self) : self._iyl = (self._iyl - 1) & 0xFF; if self._iyl == 0xFF : self._iyh = (self._iyh - 1) & 0xFF
     def _dec_sp (self) : self._sp = (self._sp - 1) & 0xFFFF
 
-    def _add_a_a (self) : pass
-    def _add_a_b (self) : pass
-    def _add_a_c (self) : pass
-    def _add_a_d (self) : pass
-    def _add_a_e (self) : pass
-    def _add_a_h (self) : pass
-    def _add_a_l (self) : pass
+    def _add_flags (self) :
+        self._f = 0
+        if self._a > 0xFF : self._f |= 0x10
+        if self._a == 0 : self._f |= 0x40
+        self._a = self._a & 0xFF
+
+    def _add_a_a (self) : self._a += self._a; self._add_flags ()
+    def _add_a_b (self) : self._a += self._b; self._add_flags ()
+    def _add_a_c (self) : self._a += self._c; self._add_flags ()
+    def _add_a_d (self) : self._a += self._d; self._add_flags ()
+    def _add_a_e (self) : self._a += self._e; self._add_flags ()
+    def _add_a_h (self) : self._a += self._h; self._add_flags ()
+    def _add_a_l (self) : self._a += self._l; self._add_flags ()
     def _add_a_ixh (self) : pass
     def _add_a_ixl (self) : pass
     def _add_a_iyh (self) : pass
@@ -631,7 +620,7 @@ class Z80(object) :
     def _add_a_m_hl (self) : pass
     def _add_a_m_ixn (self) : pass
     def _add_a_m_iyn (self) : pass
-    def _add_a_n (self) : pass
+    def _add_a_n (self) : self._a += self._sn (); self._add_flags ()
     def _add_hl_bc (self) : pass
     def _add_hl_de (self) : pass
     def _add_hl_hl (self) : pass
@@ -776,7 +765,6 @@ class Z80(object) :
     def _pop_iy (self) : pass
 
     def _in_a_m_n (self) : pass
-    def _out_m_nn_a (self) : pass
 
     def _rst_00 (self) : pass
     def _rst_08 (self) : pass
@@ -795,6 +783,8 @@ class Z80(object) :
     def _cpl (self) : pass
     def _scf (self) : pass
     def _ccf (self) : pass
+
+    def _out_m_nn_a (self) : pass
 
     def _di (self) : pass
     def _ei (self) : pass
