@@ -7,14 +7,19 @@ DISPLAY_HEIGHT = 800
 
 BORDER_COLOR = (188, 196, 209)
 BACKGROUND_COLOR = (66, 134, 244)
+FONT_COLOR = (237, 245, 249)
 myfont = None
 
 
 class Box(object):
+
+    BORDER_COLOR = (74, 112, 173)
+    BACKGROUND_COLOR = (106, 129, 168)
+
     def __init__(self, x, y, w, h):
         self._border = pygame.Rect(x, y, w, h)
-        self._border_color = (150, 0, 0)
-        self._background_color = (20, 20, 20)
+        self._border_color = Box.BORDER_COLOR
+        self._background_color = Box.BACKGROUND_COLOR
 
     def render(self, surface):
         pygame.draw.rect(surface, self._border_color, self._border, 1)
@@ -35,16 +40,16 @@ class TitleBar(Box):
         if self._title_surface:
             surface.blit(
                 self._title_surface,
-                self._border.x,
-                self._border.y,
+                (self._border.x + 2, self._border.y + 1, self._border.w-2, self._border.h-1),
             )
+
 
     def set(self, title):
         global myfont
         self._title_surface = myfont.render(
             title,
             True,
-            self._border_color,
+            FONT_COLOR,
             self._background_color
         )
 
