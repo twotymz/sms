@@ -3,56 +3,48 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include "sms_types.h"
-
-static unsigned char *s_rom = 0;
-static size_t s_rom_bytes = 0;
+#include "sms.h"
 
 
-size_t smsRomBytes()
+SMS::~SMS()
 {
-  return s_rom_bytes;
+  if(m_rom) {
+    free(m_rom);
+  }
 }
 
 
-byte_t smsReadByte(word_t pc)
-{
-  return s_rom[pc];
-}
-
-
-word_t smsReadWord(word_t pc)
-{
-  return s_rom[pc] | s_rom[pc+1] << 8;
-}
-
-
-int smsReadRom(const char *path)
+int SMS::load(const char *path)
 {
   FILE *fptr = fopen(path, "rb");
   size_t rom_size = 0;
   int error = 0;
 
-  if(!fptr){
+  if(!fptr) {
     fprintf(stderr, "Failed opening %s for reading.\n", path);
     return -1;
   }
 
-  s_rom_bytes = 0;
+  m_bytes = 0;
 
-  while(true){
+  if (m_rom) {
+    free(m_rom);
+    m_rom = 0;
+  }
+
+  while(true) {
 
     rom_size += 32 * 1024;
-    s_rom = (unsigned char *)realloc(s_rom, sizeof(unsigned char) * rom_size);
+    m_rom = (unsigned char *)realloc(m_rom, sizeof(unsigned char) * rom_size);
 
-    if(!s_rom){
+    if(!m_rom) {
       fprintf(stderr, "Failed allocating memory for rom. (%s).\n", strerror(errno));
       error = 1;
       break;
     }
 
-    size_t nbytes = fread(s_rom + s_rom_bytes, 1, 32 * 1024, fptr);
-    s_rom_bytes += nbytes;
+    size_t nbytes = fread(m_rom + m_bytes, 1, 32 * 1024, fptr);
+    m_bytes += nbytes;
 
     if(nbytes < 32 * 1024){
 

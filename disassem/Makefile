@@ -8,10 +8,10 @@ OBJS=$(subst .cpp,.o,$(SRCS))
 TARGET=disassem
 
 $(TARGET): $(OBJS)
-	gcc $(LDFLAGS) -o $(TARGET) $(OBJS) $(LDLIBS)
+	g++ $(LDFLAGS) -o $(TARGET) $(OBJS) $(LDLIBS)
 
 .cpp.o:
-	gcc $(CPPFLAGS) -c $<
+	g++ $(CPPFLAGS) -c $<
 
 clean:
 	rm *.o $(TARGET)
