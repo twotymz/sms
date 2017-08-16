@@ -14,7 +14,7 @@ class SMS {
 
     ~SMS();
 
-    size_t bytes() const {
+    int bytes() const {
       return m_bytes;
     }
 
@@ -30,8 +30,8 @@ class SMS {
 
   private:
 
-    unsigned char *m_rom;
-    size_t m_bytes;
+    byte_t *m_rom;
+    int     m_bytes;
 };
 
 #endif

@@ -17,14 +17,14 @@ int main(int argc, char *argv[])
     return -1;
   }
 
-  size_t pc = 0;
+  word_t pc = 0;
   while(pc < sms.bytes ()) {
-    
+
     decode_s decoded;
     char buf[32];
 
     pc += decode (&sms, pc, &decoded);
-    printf ("%04llx  %04x  %s\n", pc, decoded.opcode, mnemonic(&decoded, buf));
+    printf ("%04x  %04x  %s\n", pc, decoded.opcode, mnemonic(&decoded, buf));
   }
 
   return 0;

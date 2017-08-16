@@ -7,17 +7,17 @@
 #include "decode.h"
 
 
-static void ddcb_prefix(SMS *sms, size_t pc, decode_s *decoded)
+static void ddcb_prefix(SMS *sms, word_t pc, decode_s *decoded)
 {
 }
 
 
-static void fdcb_prefix(SMS *sms, size_t pc, decode_s *decoded)
+static void fdcb_prefix(SMS *sms, word_t pc, decode_s *decoded)
 {
 }
 
 
-static void cb_prefix(SMS *sms, size_t pc, decode_s *decoded)
+static void cb_prefix(SMS *sms, word_t pc, decode_s *decoded)
 {
   unsigned char opcode = sms->readByte(pc);
 
@@ -35,7 +35,7 @@ static void cb_prefix(SMS *sms, size_t pc, decode_s *decoded)
 }
 
 
-static void dd_prefix(SMS *sms, size_t pc, decode_s *decoded)
+static void dd_prefix(SMS *sms, word_t pc, decode_s *decoded)
 {
   byte_t next_byte = sms->readByte(pc + 1);
   if (next_byte == 0xDD || next_byte == 0xED || next_byte == 0xFD) {
@@ -56,12 +56,12 @@ static void dd_prefix(SMS *sms, size_t pc, decode_s *decoded)
 }
 
 
-static void ed_prefix(SMS *sms, size_t pc, decode_s *decoded)
+static void ed_prefix(SMS *sms, word_t pc, decode_s *decoded)
 {
 }
 
 
-static void fd_prefix(SMS *sms, size_t pc, decode_s *decoded)
+static void fd_prefix(SMS *sms, word_t pc, decode_s *decoded)
 {
   byte_t next_byte = sms->readByte(pc + 1);
   if (next_byte == 0xDD || next_byte == 0xED || next_byte == 0xFD) {
