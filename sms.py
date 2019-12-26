@@ -5,12 +5,6 @@ from decode import decode
 from z80 import Z80
 
 
-class Mapper:
-
-    def __init__(self):
-        self.ram = bytearray()
-
-
 def main():
 
     rom = None
