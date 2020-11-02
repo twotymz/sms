@@ -51,38 +51,14 @@ class Z80:
     def run(self, instruction):
 
         print('-' * 20)
-        print('{} 0x{:X} {}'.format(
-            self.pc,
-            instruction['opcode'],
-            instruction['mnemonic']
-        ))
+        print(f'{self.pc} 0x{instruction["opcode"]:X} {instruction["mnemonic"]}')
 
         self.pc += instruction['bytes']
         self.h[instruction['opcode']](instruction)
 
-        print('A: {:X} BC: {:04X} DE: {:04X} HL: {:04X} IX: {:04X} IY: {:04X}'.format(
-            self.af & 0xF0 >> 8,
-            self.bc,
-            self.de,
-            self.hl,
-            self.ix,
-            self.iy
-        ))
-        print("A': {:X} BC': {:04X} DE': {:04X} HL': {:04X} SP: {:04X}".format(
-            self.af_ & 0xF0 >> 8,
-            self.bc_,
-            self.de_,
-            self.hl_,
-            self.sp
-        ))
-        print("FS: {} FZ: {} FHC: {} FP: {} FN: {} FC: {}".format(
-            (self.af & 0x0080) >> 7,
-            (self.af & 0x0040) >> 6,
-            (self.af & 0x0010) >> 4,
-            (self.af & 0x0004) >> 3,
-            (self.af & 0x0002) >> 2,
-            (self.af & 0x0001)
-        ))
+        print(f'A: {self.af & 0xF0 >> 8:X} BC: {self.bc:04X} DE: {self.de:04X} HL: {self.hl:04X} IX: {self.ix:04X} IY: {self.iy:04X}')
+        print(f"A': {self.af_ & 0xF0 >> 8:X} BC': {self.bc_:04X} DE': {self.de_:04X} HL': {self.hl_:04X} SP: {self.sp:04X}")
+        print(f"FS: {(self.af & 0x0080) >> 7} FZ: {(self.af & 0x0040) >> 6} FHC: {(self.af & 0x0010) >> 4} FP: {(self.af & 0x0004) >> 3} FN: {(self.af & 0x0002) >> 2} FC: {(self.af & 0x0001)}")
 
     ''' ======== Jump Instructions ======== '''
 

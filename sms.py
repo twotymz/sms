@@ -18,6 +18,7 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('rom', help='the rom file to use')
+    parser.add_argument('--instructions', type=int)
     args = parser.parse_args()
 
     with open(args.rom, 'rb') as binfile:
@@ -32,6 +33,8 @@ def main():
     header['region'] = (byte(0x7FFF) & 0xF0) >> 4
     header['size'] = byte(0x7FFF) & 0xF
 
+    instructions_executed = 0
+
     while True:
         try:
             i = decode(cpu.pc, byte, word)
@@ -39,6 +42,10 @@ def main():
         except:
             print('Unhandled instruction')
             pprint.pprint(i)
+            break
+
+        instructions_executed += 1
+        if args.instructions and args.instructions == instructions_executed:
             break
 
 
