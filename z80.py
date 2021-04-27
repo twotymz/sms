@@ -16,7 +16,7 @@ class Z80:
         self._pc = 0
 
         self._h = {
-            0xF3: lambda z, _: z._interrupts_enabled = False
+            #0xF3: lambda z, _: z._interrupts_enabled = False
         }
 
     def run(self, byte, word):

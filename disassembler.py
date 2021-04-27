@@ -1,8 +1,5 @@
 import argparse
-import os
-from dataclasses import dataclass
 import decode
-import numpy as np
 from sms import SegaMasterSystem
 
 
