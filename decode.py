@@ -90,11 +90,12 @@ _table_bli = [
 def _ddcb_prefix(pc, byte, word):
 
     opcode = byte(pc)
+    decoded = Decoded(1, 0xDDCB, opcode)
 
-    c = 1
-    mnemonic = None
-    immediate = 0
-    displacement = 0
+    #c = 1
+    #mnemonic = None
+    #immediate = 0
+    #displacement = 0
 
     x = (opcode & 0xC0) >> 6
     y = (opcode & 0x38) >> 3
@@ -104,48 +105,49 @@ def _ddcb_prefix(pc, byte, word):
 
     if x == 0:
         if z != 6:
-            displacement = byte(pc + c)
-            c += 1
-            mnemonic = f'LD {_table_r[z]}, {_table_rot[y]} (IX+{displacement})'
+            decoded.displacement = byte(pc + 1)
+            decoded.bytes += 1
+            decoded.mnemonic = f'LD {_table_r[z]}, {_table_rot[y]} (IX+{decoded.displacement})'
         else:
-            displacement = byte(pc + c)
-            c += 1
-            mnemonic = f'{_table_rot[y]} (IX+{displacement})'
+            decoded.displacement = byte(pc + 1)
+            decoded.bytes += 1
+            decoded.mnemonic = f'{_table_rot[y]} (IX+{decoded.displacement})'
 
     elif x == 1:
-        mnemonic = f'BIT {y}, {_table_r[z]}'
+        decoded.mnemonic = f'BIT {y}, {_table_r[z]}'
 
     elif x == 2:
         if z != 6:
-            displacement = byte(pc + c)
-            c += 1
-            mnemonic = f'LD {_table_r[z]}, RES {y}, (IX+{displacement})'
+            decoded.displacement = byte(pc + 1)
+            decoded.bytes += 1
+            decoded.mnemonic = f'LD {_table_r[z]}, RES {y}, (IX+{decoded.displacement})'
         else:
-            displacement = byte(pc + c)
-            c += 1
-            mnemonic = f'RES {y}, (IX+{displacement})'
+            decoded.displacement = byte(pc + 1)
+            decoded.bytes += 1
+            decoded.mnemonic = f'RES {y}, (IX+{decoded.displacement})'
 
     elif x == 3:
         if z != 6:
-            displacement = byte(pc + c)
-            c += 1
-            mnemonic = f'LD {_table_r[z]}, SET {y}, (IX+{displacement})'
+            decoded.displacement = byte(pc + 1)
+            decoded.bytes += 1
+            decoded.mnemonic = f'LD {_table_r[z]}, SET {y}, (IX+{decoded.displacement})'
         else:
-            displacement = byte(pc + c)
-            c += 1
-            mnemonic = f'SET {y}, (IX+{displacement})'
+            decoded.displacement = byte(pc + 1)
+            decoded.bytes += 1
+            decoded.mnemonic = f'SET {y}, (IX+{decoded.displacement})'
 
-    return Decoded(c, 0xDDCB, opcode, displacement, immediate, mnemonic)
+    #return Decoded(c, 0xDDCB, opcode, displacement, immediate, mnemonic)
+    return decoded
 
 
 def _fdcb_prefix(pc, byte, word):
 
     opcode = byte(pc)
+    decoded = Decoded(1, 0xFDCB, opcode)
 
-    c = 1
-    mnemonic = None
-    immediate = 0
-    displacement = 0
+    #mnemonic = None
+    #immediate = 0
+    #displacement = 0
 
     x = (opcode & 0xC0) >> 6
     y = (opcode & 0x38) >> 3
@@ -155,48 +157,50 @@ def _fdcb_prefix(pc, byte, word):
 
     if x == 0:
         if z != 6:
-            displacement = byte(pc + c)
-            c += 1
-            mnemonic = f'LD {_table_r[z]}, {_table_rot[y]} (IY+{displacement})'
+            decoded.displacement = byte(pc + 1)
+            decoded.bytes += 1
+            decoded.mnemonic = f'LD {_table_r[z]}, {_table_rot[y]} (IY+{decoded.displacement})'
         else:
-            displacement = byte(pc + c)
-            c += 1
-            mnemonic = f'{_table_rot[y]} (IY+{displacement})'
+            decoded.displacement = byte(pc + 1)
+            decoded.bytes += 1
+            decoded.mnemonic = f'{_table_rot[y]} (IY+{decoded.displacement})'
 
     elif x == 1:
-        mnemonic = f'BIT {y}, {_table_r[z]}'
+        decoded.mnemonic = f'BIT {y}, {_table_r[z]}'
 
     elif x == 2:
         if z != 6:
-            displacement = byte(pc + c)
-            c += 1
-            mnemonic = f'LD {_table_r[z]}, RES {y}, (IY+{displacement})'
+            decoded.displacement = byte(pc + 1)
+            decoded.bytes += 1
+            decoded.mnemonic = f'LD {_table_r[z]}, RES {y}, (IY+{decoded.displacement})'
         else:
-            displacement = byte(pc + c)
-            c += 1
-            mnemonic = f'RES {y}, (IY+{displacement})'
+            decoded.displacement = byte(pc + 1)
+            decoded.bytes += 1
+            decoded.mnemonic = f'RES {y}, (IY+{decoded.displacement})'
 
     elif x == 3:
         if z != 6:
-            displacement = byte(pc + c)
-            c += 1
-            mnemonic = f'LD {_table_r[z]}, SET {y}, (IY+{displacement})'
+            decoded.displacement = byte(pc + 1)
+            decoded.bytes += 1
+            decoded.mnemonic = f'LD {_table_r[z]}, SET {y}, (IY+{decoded.displacement})'
         else:
-            displacement = byte(pc + c)
-            c += 1
-            mnemonic = f'SET {y}, (IY+{displacement})'
+            decoded.displacement = byte(pc + 1)
+            decoded.bytes += 1
+            decoded.mnemonic = f'SET {y}, (IY+{decoded.displacement})'
 
-    return Decoded(c, 0xFDCB, opcode, displacement, immediate, mnemonic)
+    #return Decoded(c, 0xFDCB, opcode, displacement, immediate, mnemonic)
+    return decoded
 
 
 def _cb_prefix(pc, byte, word):
 
     opcode = byte(pc)
+    decoded = Decoded(1, 0xCB, opcode)
 
-    c = 1
-    mnemonic = None
-    displacement = 0
-    immediate = 0
+    #c = 1
+    #mnemonic = None
+    #displacement = 0
+    #immediate = 0
 
     x = (opcode & 0xC0) >> 6
     y = (opcode & 0x38) >> 3
@@ -205,15 +209,16 @@ def _cb_prefix(pc, byte, word):
     q = y & 0x1
 
     if x == 0:
-        mnemonic = f'{_table_rot[y]} {_table_r[z]}'
+        decoded.mnemonic = f'{_table_rot[y]} {_table_r[z]}'
     elif x == 1:
-        mnemonic = f'BIT {y}, {_table_r[z]}'
+        decoded.mnemonic = f'BIT {y}, {_table_r[z]}'
     elif x == 2:
-        mnemonic = f'RES {y}, {_table_r[z]}'
+        decoded.mnemonic = f'RES {y}, {_table_r[z]}'
     elif x == 3:
-        mnemonic = f'SET {y}, {_table_r[z]}'
+        decoded.mnemonic = f'SET {y}, {_table_r[z]}'
 
-    return Decoded(c, 0xCB, opcode, displacement, immediate, mnemonic)
+    #return Decoded(c, 0xCB, opcode, displacement, immediate, mnemonic)
+    return decoded
 
 
 def _dd_prefix(pc, byte, word):
@@ -224,7 +229,7 @@ def _dd_prefix(pc, byte, word):
     if next_byte in (0xDD, 0xED, 0xFD):
         decoded = Decoded(0, 0xDD, next_byte, None, None, 'NOP')
     elif next_byte == 0xCB:
-        decoded = _ddcb_prefix(pc+c, byte, word)
+        decoded = _ddcb_prefix(pc + c, byte, word)
     else:
         decoded = decode(pc + c, byte, word)
         decoded.prefix = 0xDD
@@ -236,11 +241,12 @@ def _dd_prefix(pc, byte, word):
 def _ed_prefix(pc, byte, word):
 
     opcode = byte(pc)
+    decoded = Decoded(1, 0xED, opcode)
 
-    c = 1
-    mnemonic = None
-    displacement = 0
-    immediate = 0
+    #c = 1
+    #mnemonic = None
+    #displacement = 0
+    #immediate = 0
 
     x = (opcode & 0xC0) >> 6
     y = (opcode & 0x38) >> 3
@@ -251,46 +257,47 @@ def _ed_prefix(pc, byte, word):
     if x == 1:
         if z == 0:
             if y != 6:
-                mnemonic = f'IN {_table_r[y]}, (C)'
+                decoded.mnemonic = f'IN {_table_r[y]}, (C)'
             else:
-                mnemonic = 'IN (C)'
+                decoded.mnemonic = 'IN (C)'
         elif z == 1:
             if y != 6:
-                mnemonic = f'OUT {_table_r[y]}, (C)'
+                decoded.mnemonic = f'OUT {_table_r[y]}, (C)'
             else:
-                mnemonic = 'OUT (C), 0'
+                decoded.mnemonic = 'OUT (C), 0'
         elif z == 2:
             if q == 0:
-                mnemonic = f'SBC HL, {_table_rp[p]}'
+                decoded.mnemonic = f'SBC HL, {_table_rp[p]}'
             elif q == 1:
-                mnemonic = f'ADC HL, {_table_rp[p]}'
+                decoded.mnemonic = f'ADC HL, {_table_rp[p]}'
         elif z == 3:
             if q == 0:
-                immediate = word(pc + c)
-                c += 2
-                mnemonic = f'LD (0x{immediate:02X}), {_table_rp[p]}'
+                decoded.immediate = word(pc + 1)
+                decoded.bytes += 2
+                decoded.mnemonic = f'LD (0x{decoded.immediate:02X}), {_table_rp[p]}'
             elif q == 1:
-                immediate = word(pc + c)
-                c += 2
-                mnemonic = f'LD {_table_rp[p]}, (0x{immediate:02X})'
+                decoded.immediate = word(pc + 1)
+                decoded.bytes += 2
+                decoded.mnemonic = f'LD {_table_rp[p]}, (0x{decoded.immediate:02X})'
         elif z == 4:
-            mnemonic = 'NEG'
+            decoded.mnemonic = 'NEG'
         elif z == 5:
             if y != 1:
-                mnemonic = 'RETN'
+                decoded.mnemonic = 'RETN'
             else:
-                mnemonic = 'RETI'
+                decoded.mnemonic = 'RETI'
         elif z == 6:
-            mnemonic = f'IM {_table_im[y]}'
+            decoded.mnemonic = f'IM {_table_im[y]}'
         elif z == 7:
-            mnemonic = ['LD I, A', 'LD R, A', 'LD A, I', 'LD A, R', 'RRD', 'RLD', 'NOP', 'NOP'][y]
+            decoded.mnemonic = ['LD I, A', 'LD R, A', 'LD A, I', 'LD A, R', 'RRD', 'RLD', 'NOP', 'NOP'][y]
 
     elif x == 2:
         if z <= 3:
             if y >= 4:
-                mnemonic = _table_bli[y-4][z]
+                decoded.mnemonic = _table_bli[y-4][z]
 
-    return Decoded(c, 0xED, opcode, displacement, immediate, mnemonic)
+    #return Decoded(c, 0xED, opcode, displacement, immediate, mnemonic)
+    return decoded
 
 
 def _fd_prefix(pc, byte, word):
@@ -334,6 +341,7 @@ def decode(pc, byte, word):
 
     # Get the opcode.
     opcode = byte(pc)
+    decoded = Decoded(1, 0, opcode)
 
     x = (opcode & 0xC0) >> 6
     y = (opcode & 0x38) >> 3
@@ -341,9 +349,7 @@ def decode(pc, byte, word):
     p = y >> 1
     q = y & 0x1
 
-    c = 1
-
-    decoded = Decoded(c, 0, opcode)
+    #c = 1
 
     if x == 0:
         if z == 0:
@@ -352,21 +358,21 @@ def decode(pc, byte, word):
             elif y == 1:
                 decoded.mnemonic = "EX AF, AF'"
             elif y == 2:
-                decoded.displacement = byte(pc+c)
+                decoded.displacement = byte(pc + 1)
                 decoded.bytes += 1
                 decoded.mnemonic = f'DJNZ {decoded.displacement}'
             elif y == 3:
-                decoded.displacement = _signed_byte(pc+c)
+                decoded.displacement = _signed_byte(pc + 1)
                 decoded.bytes += 1
                 decoded.mnemonic = f'JR {decoded.displacement}'
             elif y in (4, 5, 6, 7):
-                decoded.displacement = _signed_byte(pc+c)
+                decoded.displacement = _signed_byte(pc + 1)
                 decoded.bytes += 1
                 decoded.mnemonic = f'JR {_table_cc[y-4]}, {decoded.displacement}'
 
         elif z == 1:
             if q == 0:
-                decoded.immediate = word(pc + c)
+                decoded.immediate = word(pc + 1)
                 decoded.bytes += 2
                 decoded.mnemonic = f'LD {_table_rp[p]}, 0x{decoded.immediate:04X}'
             elif q == 1:
@@ -379,11 +385,11 @@ def decode(pc, byte, word):
                 elif p == 1:
                     decoded.mnemonic = 'LD (DE), A'
                 elif p == 2:
-                    decoded.immediate = word(pc + c)
+                    decoded.immediate = word(pc + 1)
                     decoded.bytes += 2
                     decoded.mnemonic = f'LD (0x{decoded.immediate:04X}), HL'
                 elif p == 3:
-                    decoded.immediate = word(pc + c)
+                    decoded.immediate = word(pc + 1)
                     decoded.bytes += 2
                     decoded.mnemonic = f'LD (0x{decoded.immediate:04X}), A'
 
@@ -393,11 +399,11 @@ def decode(pc, byte, word):
                 elif p == 1:
                     decoded.mnemonic = 'LD A, (DE)'
                 elif p == 2:
-                    decoded.immediate = word(pc + c)
+                    decoded.immediate = word(pc + 1)
                     decoded.bytes += 2
                     decoded.mnemonic = f'LD HL, (0x{decoded.immediate:04X})'
                 elif p == 3:
-                    decoded.immediate = word(pc + c)
+                    decoded.immediate = word(pc + 1)
                     decoded.bytes += 2
                     decoded.mnemonic = f'LD A, (0x{decoded.immediate:04X})'
 
@@ -414,7 +420,7 @@ def decode(pc, byte, word):
             decoded.mnemonic = f'DEC {_table_r[y]}'
 
         elif z == 6:
-            decoded.immediate = byte(pc + c)
+            decoded.immediate = byte(pc + 1)
             decoded.bytes += 1
             decoded.mnemonic = f'LD {_table_r[y]}, 0x{decoded.immediate:02X}'
 
@@ -439,28 +445,28 @@ def decode(pc, byte, word):
             elif q == 1:
                 decoded.mnemonic = ['RET', 'EXX', 'JP HL', 'LD SP, HL'][p]
         elif z == 2:
-            decoded.immediate = word(pc + c)
+            decoded.immediate = word(pc + 1)
             decoded.bytes += 2
             decoded.mnemonic = f'JP {_table_cc[y]}, 0x{decoded.immediate:04X}'
         elif z == 3:
             if y == 0:
-                decoded.immediate = word(pc + c)
+                decoded.immediate = word(pc + 1)
                 decoded.bytes += 2
                 decoded.mnemonic = f'JP 0x{decoded.immediate:04X}'
             elif y == 1:
-                decoded = _cb_prefix(pc + c, byte, word)
+                decoded = _cb_prefix(pc + 1, byte, word)
             elif y == 2:
-                decoded.immediate = byte(pc + c)
+                decoded.immediate = byte(pc + 1)
                 decoded.bytes += 1
                 decoded.mnemonic = f'OUT (0x{decoded.immediate:02X}), A'
             elif y == 3:
-                decoded.immediate = byte(pc + c)
+                decoded.immediate = byte(pc + 1)
                 decoded.bytes += 1
                 decoded.mnemonic = f'IN A, (0x{decoded.immediate:02X})'
             elif y in (4, 5, 6, 7):
                 decoded.mnemonic = ['EX (SP), HL', 'EX DE, HL', 'DI', 'EI'][y-4]
         elif z == 4:
-            decoded.immediate = word(pc + c)
+            decoded.immediate = word(pc + 1)
             decoded.bytes += 2
             decoded.mnemonic = f'CALL {_table_cc[y]}, 0x{decoded.immediate:04X}'
         elif z == 5:
@@ -468,21 +474,21 @@ def decode(pc, byte, word):
                 decoded.mnemonic = f'PUSH {_table_rp2[p]}'
             elif q == 1:
                 if p == 0:
-                    decoded.immediate = word(pc + c)
+                    decoded.immediate = word(pc + 1)
                     decoded.bytes += 2
                     decoded.mnemonic = f'CALL 0x{decoded.immediate:04X}'
                 elif p == 1:
-                    decoded = _dd_prefix(pc + c, byte, word)
+                    decoded = _dd_prefix(pc + 1, byte, word)
                     decoded.bytes += 1
                 elif p == 2:
-                    decoded = _ed_prefix(pc + c, byte, word)
+                    decoded = _ed_prefix(pc + 1, byte, word)
                     decoded.bytes += 1
                 elif p == 3:
-                    decoded = _fd_prefix(pc + c, byte, word)
+                    decoded = _fd_prefix(pc + 1, byte, word)
                     decoded.bytes += 1
 
         elif z == 6:
-            decoded.immediate = byte(pc+c)
+            decoded.immediate = byte(pc + 1)
             decoded.bytes += 1
             decoded.mnemonic = f'{_table_alu[y]} 0x{decoded.immediate:02X}'
         elif z == 7:
