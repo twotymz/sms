@@ -20,6 +20,7 @@ class SegaMasterSystem:
 
     def __init__(self):
         self._rom = None
+        self._ram = np.
 
     def load(self, path):
         self._rom = None

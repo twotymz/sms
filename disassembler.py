@@ -13,15 +13,13 @@ def disassembler(path):
     print(header)
     print('=' * 20)
 
-    sms.load(path)
-
     byte = lambda a: sms.readByte(a)
     word = lambda a: sms.readWord(a)
 
     pc = 0
     while pc < sms.bytes:
-        decoded = decode.decode(pc, byte, word)
 
+        decoded = decode.decode(pc, byte, word)
         bytes = ''
         for i in range(decoded.bytes):
             bytes += f'{sms.readByte(pc + i):02X}'

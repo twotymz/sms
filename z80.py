@@ -1,4 +1,5 @@
 
+
 class Z80:
 
     def __init__(self):
@@ -15,17 +16,26 @@ class Z80:
         self._r = 0
         self._pc = 0
 
-        self._h = {
-            #0xF3: lambda z, _: z._interrupts_enabled = False
+        self._instructions = {
+            0xF3: self._di
         }
 
     def run(self, byte, word):
 
         decoded = decode.decode(self._pc, byte, word)
         self._pc += decoded.bytes
+
+        instruction = decoded.prefix << 8 | decoded.opcode
+
         try:
-            self._h[decoded.prefix << 8 | decoded.opcode](self, decoded)
+
+            d = self._instructions[instruction]
+            d(self, decoded)
+
         except KeyError:
             print('Unhandled instruction')
             print(decoded)
             raise
+
+    def _di(self, d):
+        self._interrupts_enabled = False

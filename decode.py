@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+
 @dataclass
 class Decoded:
     bytes: int = 0
@@ -92,11 +93,6 @@ def _ddcb_prefix(addr, byte, word):
     opcode = byte(addr)
     decoded = Decoded(1, 0xDDCB, opcode)
 
-    #c = 1
-    #mnemonic = None
-    #immediate = 0
-    #displacement = 0
-
     x = (opcode & 0xC0) >> 6
     y = (opcode & 0x38) >> 3
     z = (opcode & 0x7)
@@ -136,7 +132,6 @@ def _ddcb_prefix(addr, byte, word):
             decoded.bytes += 1
             decoded.mnemonic = f'SET {y}, (IX+{decoded.displacement})'
 
-    #return Decoded(c, 0xDDCB, opcode, displacement, immediate, mnemonic)
     return decoded
 
 
@@ -144,10 +139,6 @@ def _fdcb_prefix(addr, byte, word):
 
     opcode = byte(addr)
     decoded = Decoded(1, 0xFDCB, opcode)
-
-    #mnemonic = None
-    #immediate = 0
-    #displacement = 0
 
     x = (opcode & 0xC0) >> 6
     y = (opcode & 0x38) >> 3
@@ -188,7 +179,6 @@ def _fdcb_prefix(addr, byte, word):
             decoded.bytes += 1
             decoded.mnemonic = f'SET {y}, (IY+{decoded.displacement})'
 
-    #return Decoded(c, 0xFDCB, opcode, displacement, immediate, mnemonic)
     return decoded
 
 
@@ -196,11 +186,6 @@ def _cb_prefix(addr, byte, word):
 
     opcode = byte(addr)
     decoded = Decoded(1, 0xCB, opcode)
-
-    #c = 1
-    #mnemonic = None
-    #displacement = 0
-    #immediate = 0
 
     x = (opcode & 0xC0) >> 6
     y = (opcode & 0x38) >> 3
@@ -217,24 +202,23 @@ def _cb_prefix(addr, byte, word):
     elif x == 3:
         decoded.mnemonic = f'SET {y}, {_table_r[z]}'
 
-    #return Decoded(c, 0xCB, opcode, displacement, immediate, mnemonic)
     return decoded
 
 
 def _dd_prefix(addr, byte, word):
 
-    c = 1
-    next_byte = byte(addr + c)
+    next_byte = byte(addr + 1)
 
     if next_byte in (0xDD, 0xED, 0xFD):
-        decoded = Decoded(0, 0xDD, next_byte, None, None, 'NOP')
+        decoded = Decoded(1, 0xDD, next_byte, mnemonic='NOP')
     elif next_byte == 0xCB:
-        decoded = _ddcb_prefix(addr + c, byte, word)
+        decoded = _ddcb_prefix(addr + 1, byte, word)
+        decoded.bytes += 1
     else:
-        decoded = decode(addr + c, byte, word)
+        decoded = decode(addr + 1, byte, word)
+        decoded.bytes += 1
         decoded.prefix = 0xDD
 
-    decoded.bytes += c
     return decoded
 
 
@@ -242,11 +226,6 @@ def _ed_prefix(addr, byte, word):
 
     opcode = byte(addr)
     decoded = Decoded(1, 0xED, opcode)
-
-    #c = 1
-    #mnemonic = None
-    #displacement = 0
-    #immediate = 0
 
     x = (opcode & 0xC0) >> 6
     y = (opcode & 0x38) >> 3
@@ -296,26 +275,25 @@ def _ed_prefix(addr, byte, word):
             if y >= 4:
                 decoded.mnemonic = _table_bli[y-4][z]
 
-    #return Decoded(c, 0xED, opcode, displacement, immediate, mnemonic)
     return decoded
 
 
 def _fd_prefix(addr, byte, word):
 
-    c = 1
-    next_byte = byte(addr + c)
+    next_byte = byte(addr + 1)
 
     if next_byte in (0xDD, 0xED, 0xFD):
-        decoded = Decoded(0, 0xFD, next_byte, None, None, 'NOP')
+        decoded = Decoded(1, 0xFD, next_byte, mnemonic='NOP')
 
     elif next_byte == 0xCB:
-        decoded = _fdcb_prefix(addr + c, byte, word)
+        decoded = _fdcb_prefix(addr + 1, byte, word)
+        decoded.bytes += 1
 
     else:
-        decoded = decode(addr + c, byte, word)
+        decoded = decode(addr + 1, byte, word)
+        decoded.bytes += 1
         decoded.prefix = 0xFD
 
-    decoded.bytes += c
     return decoded
 
 
