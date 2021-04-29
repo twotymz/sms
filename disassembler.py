@@ -1,28 +1,31 @@
 import argparse
 import decode
-from sms import SegaMasterSystem
+from memory import Memory
+from cartridge import Cartridge
 
 
 def disassembler(path):
-    sms = SegaMasterSystem()
-    sms.load(path)
+    cart = Cartridge()
+    memory = Memory()
 
-    header = sms.readHeader()
+    cart.load(path)
+    header = cart.readHeader()
+    memory.loadCart(cart)
 
     print('=' * 20)
     print(header)
     print('=' * 20)
 
-    byte = lambda a: sms.readByte(a)
-    word = lambda a: sms.readWord(a)
+    byte = lambda a: memory.readByte(a)
+    word = lambda a: memory.readWord(a)
 
     pc = 0
-    while pc < sms.bytes:
+    while pc < 0xFFFF:
 
         decoded = decode.decode(pc, byte, word)
         bytes = ''
         for i in range(decoded.bytes):
-            bytes += f'{sms.readByte(pc + i):02X}'
+            bytes += f'{memory.readByte(pc + i):02X}'
 
         while len(bytes) < 6:
             bytes = '00' + bytes
