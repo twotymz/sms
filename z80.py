@@ -1,5 +1,4 @@
 
-
 class Z80:
 
     def __init__(self):
@@ -9,11 +8,11 @@ class Z80:
         self._bc[2] = 0
         self._de[2] = 0
         self._hl[2] = 0
+        self._i = 0
+        self._r = 0
         self._ix = 0
         self._iy = 0
         self._sp = 0
-        self._i = 0
-        self._r = 0
         self._pc = 0
 
         self._instructions = {
