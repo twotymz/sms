@@ -1,28 +1,34 @@
 from z80 import Z80
 from cartridge import Cartridge
 from memory import Memory
-from port_mapper import PortMapper
+from io_port import IOPort
+from port_mapper import PortMapper, BadPort
 from decode import decode
-from instructions import instructions
+from instructions import execute, BadInstruction
 
 
 cartridge = Cartridge()
 memory = Memory()
 cpu = Z80()
-ports = PortMapper()
+io = IOPort()
+ports = PortMapper(io)
+
 
 cartridge.load('roms/transbot.sms')
-memory.loadCart(cartridge)
+memory.load_cart(cartridge)
+
 
 while True:
     print(cpu)
-
     decoded = decode(cpu.pc.reg, memory)
     print(f'\n {decoded.mnemonic}')
     print('-' * 95)
 
     try:
-        cycles = instructions[decoded.instruction](decoded, cpu, memory, ports)
-    except KeyError:
-        print(f'Unhandled instruction 0x{decoded.instruction:06X}, {decoded.mnemonic}')
+        cycles = execute(decoded, cpu, memory, ports)
+    except BadInstruction as e:
+        print(f' bad instruction at 0x{e.pc:04X}: {e.decoded.mnemonic} (0x{e.decoded.instruction:06X})')
+        exit()
+    except BadPort as e:
+        print(f' attempt to access undefined port at {e.port:02X}')
         exit()

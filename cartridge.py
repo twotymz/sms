@@ -44,7 +44,7 @@ class Cartridge:
     def pages(self):
         return self._pages
 
-    def readHeader(self):
+    def read_header(self):
         """ Read and decode the header from the loaded rom.
 
         Returns:

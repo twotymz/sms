@@ -4,7 +4,7 @@ class Memory:
     def __init__(self):
         self._ram = bytearray(0xFFFF)    # 64k of memory
 
-    def loadCart(self, cart):
+    def load_cart(self, cart):
         """ Load the cartridge into memory.
 
         Args:
@@ -14,7 +14,7 @@ class Memory:
         pages = min(cart.pages, 3)
         self._ram[:0x4000 * pages] = cart.rom[:0x4000 * pages]
 
-    def readByte(self, addr):
+    def read(self, addr):
         """ Reads an 8-bit value from memory at "addr".
 
         Args:
@@ -25,7 +25,7 @@ class Memory:
         """
         return self._ram[addr] & 0xFF
 
-    def readWord(self, addr):
+    def read_word(self, addr):
         """ Reads a 16-bit value from memory at "addr".
 
         Args:
@@ -34,11 +34,11 @@ class Memory:
         Returns:
             int
         """
-        return self.readByte(addr) | (self.readByte(addr+1) << 8)
+        return self.read(addr) | (self.read(addr+1) << 8)
 
-    def writeByte(self, addr, v):
+    def write(self, addr, v):
         self._ram[addr] = v & 0xFF
 
-    def writeWord(self, addr, v):
-        self.writeByte(addr, v >> 8)
-        self.writeByte(addr+1, v)
+    def write_word(self, addr, v):
+        self.write(addr, v)
+        self.write(addr+1, v >> 8)

@@ -9,8 +9,8 @@ def disassembler(path):
     memory = Memory()
 
     cart.load(path)
-    header = cart.readHeader()
-    memory.loadCart(cart)
+    header = cart.read_header()
+    memory.load_cart(cart)
 
     print('=' * 20)
     print(header)
@@ -23,7 +23,7 @@ def disassembler(path):
         decoded = decode.decode(pc, memory)
         bytes = ''
         for i in range(decoded.bytes):
-            bytes += f'{memory.readByte(pc + i):02X}'
+            bytes += f'{memory.read(pc + i):02X}'
 
         while len(bytes) < 6:
             bytes = '00' + bytes

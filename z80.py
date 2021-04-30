@@ -40,17 +40,69 @@ class Z80:
     sp: Register = Register()
     pc: Register = Register()
 
-    def resetH(self):
+    @property
+    def s_flag(self):
+        return (self.af.lo & 0x80) >> 7
+
+    def s_set(self):
+        self.af.lo = self.af.lo | 0x80
+
+    def s_reset(self):
+        self.af.lo = self.af.lo & ~0x80
+
+    @property
+    def z_flag(self):
+        return (self.af.lo & 0x40) >> 6
+
+    def z_set(self):
+        self.af.lo = self.af.lo | 0x40
+
+    def z_reset(self):
+        self.af.lo = self.af.lo & ~0x40
+
+    @property
+    def h_flag(self):
+        return (self.af.lo & 0x10) >> 4
+
+    def h_set(self):
+        self.af.lo = self.af.lo | 0x10
+
+    def h_reset(self):
         self.af.lo = self.af.lo & ~0x10
 
-    def resetN(self):
+    @property
+    def pv_flag(self):
+        return (self.af.lo & 0x04) >> 2
+
+    def pv_set(self):
+        self.af.lo = self.af.lo | 0x04
+
+    def pv_reset(self):
+        self.af.lo = self.af.lo & ~0x04
+
+    @property
+    def n_flag(self):
+        return (self.af.lo & 0x02) >> 1
+
+    def n_set(self):
+        self.af.lo = self.af.lo | 0x02
+
+    def n_reset(self):
         self.af.lo = self.af.lo & ~0x02
 
-    def resetPV(self):
-        self.af.lo = self.af.lo & ~0x04
+    @property
+    def c_flag(self):
+        return self.af.lo & 0x01
+
+    def c_set(self):
+        self.af.lo = self.af.lo | 0x01
+
+    def c_reset(self):
+        self.af.lo = self.af.lo & ~0x01
 
     def __repr__(self):
         s  = f" AF: {self.af} BC: {self.bc} DE: {self.de} HL: {self.hl}"
         s += f" AF': {self.af_} BC': {self.bc_} DE': {self.de_} HL': {self.hl_}\n"
-        s += f" SP: {self.sp} PC: {self.pc} IX: {self.ix} IY: {self.iy} I: 0x{self.i:02X} R: 0x{self.r:02X}"
+        s += f" SP: {self.sp} PC: {self.pc} IX: {self.ix} IY: {self.iy} I: 0x{self.i:02X} R: 0x{self.r:02X}\n"
+        s += f" S: {self.s_flag} Z: {self.z_flag} H: {self.h_flag} N: {self.n_flag} C: {self.c_flag}"
         return s
