@@ -14,15 +14,13 @@ def disassembler(path):
 
     print('=' * 20)
     print(header)
+    print(f'Num pages: {cart.pages}')
     print('=' * 20)
-
-    byte = lambda a: memory.readByte(a)
-    word = lambda a: memory.readWord(a)
 
     pc = 0
     while pc < 0xFFFF:
 
-        decoded = decode.decode(pc, byte, word)
+        decoded = decode.decode(pc, memory)
         bytes = ''
         for i in range(decoded.bytes):
             bytes += f'{memory.readByte(pc + i):02X}'

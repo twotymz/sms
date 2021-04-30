@@ -1,40 +1,45 @@
+from dataclasses import dataclass
 
+@dataclass
+class Register:
+    lo: int = 0
+    hi: int = 0
+
+    @property
+    def reg(self):
+        return self.hi << 8 | self.lo
+
+    @reg.setter
+    def reg(self, v):
+        self.lo = v & 0xFF
+        self.hi = v >> 8
+
+    def __repr__(self):
+        return f'0x{self.reg:04X}'
+
+
+@dataclass
 class Z80:
 
-    def __init__(self):
+    af: Register = Register()
+    bc: Register = Register()
+    de: Register = Register()
+    hl: Register = Register()
 
-        self._interrupts_enabled = True
-        self._af[2] = 0
-        self._bc[2] = 0
-        self._de[2] = 0
-        self._hl[2] = 0
-        self._i = 0
-        self._r = 0
-        self._ix = 0
-        self._iy = 0
-        self._sp = 0
-        self._pc = 0
+    af_: Register = Register()
+    bc_: Register = Register()
+    de_: Register = Register()
+    hl_: Register = Register()
 
-        self._instructions = {
-            0xF3: self._di
-        }
+    i: int = 0
+    r: int = 0
+    ix: Register = Register()
+    iy: Register = Register()
+    sp: Register = Register()
+    pc: Register = Register()
 
-    def run(self, byte, word):
-
-        decoded = decode.decode(self._pc, byte, word)
-        self._pc += decoded.bytes
-
-        instruction = decoded.prefix << 8 | decoded.opcode
-
-        try:
-
-            d = self._instructions[instruction]
-            d(self, decoded)
-
-        except KeyError:
-            print('Unhandled instruction')
-            print(decoded)
-            raise
-
-    def _di(self, d):
-        self._interrupts_enabled = False
+    def __repr__(self):
+        s  = f" AF: {self.af} BC: {self.bc} DE: {self.de} HL: {self.hl} "
+        s += f"AF': {self.af_} BC': {self.bc_} DE': {self.de_} HL': {self.hl_}\n"
+        s += f" SP: {self.sp} PC: {self.pc} IX: {self.ix} IY: {self.iy} I: 0x{self.i:02X} R: 0x{self.r:02X}"
+        return s

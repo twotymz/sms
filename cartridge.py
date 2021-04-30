@@ -17,9 +17,16 @@ class Cartridge:
 
     def __init__(self):
         self._rom = None
+        self._pages = 0
 
     def load(self, path):
+        """ Load the ROM at "path" into the cartridge.
+
+        Args:
+            path (str)
+        """
         self._rom = None
+        self._pages = 0
 
         fs = os.path.getsize(path)
         with open(path, 'rb') as fp:
@@ -27,6 +34,15 @@ class Cartridge:
                 fp.seek(512)
                 fs -= 512
             self._rom = bytearray(fp.read())
+            self._pages = int(len(self._rom) / 0x4000)
+
+    @property
+    def rom(self):
+        return self._rom
+
+    @property
+    def pages(self):
+        return self._pages
 
     def readHeader(self):
         """ Read and decode the header from the loaded rom.
@@ -34,6 +50,9 @@ class Cartridge:
         Returns:
             Header: the decoded header object
         """
+        if not self._rom:
+            return None
+
         header = Header()
         header.raw = ' '.join ([f'{r:02X}' for r in self._rom[0x7FF0:0x8000]])
         header.tmr_sega = ''.join ([chr(r) for r in self._rom[0x7FF0:0x7FF8]])
