@@ -23,7 +23,7 @@ class Memory:
         Returns:
             int
         """
-        return self._ram[addr]
+        return self._ram[addr] & 0xFF
 
     def readWord(self, addr):
         """ Reads a 16-bit value from memory at "addr".
@@ -34,10 +34,11 @@ class Memory:
         Returns:
             int
         """
-        return self._ram[addr] | self._ram[addr + 1] << 8
+        return self.readByte(addr) | (self.readByte(addr+1) << 8)
 
     def writeByte(self, addr, v):
-        pass
+        self._ram[addr] = v & 0xFF
 
     def writeWord(self, addr, v):
-        pass
+        self.writeByte(addr, v >> 8)
+        self.writeByte(addr+1, v)

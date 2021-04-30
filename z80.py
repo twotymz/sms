@@ -1,7 +1,9 @@
 from dataclasses import dataclass
 
+
 @dataclass
 class Register:
+    """ 16-bit register implementation. """
     lo: int = 0
     hi: int = 0
 
@@ -38,8 +40,17 @@ class Z80:
     sp: Register = Register()
     pc: Register = Register()
 
+    def resetH(self):
+        self.af.lo = self.af.lo & ~0x10
+
+    def resetN(self):
+        self.af.lo = self.af.lo & ~0x02
+
+    def resetPV(self):
+        self.af.lo = self.af.lo & ~0x04
+
     def __repr__(self):
-        s  = f" AF: {self.af} BC: {self.bc} DE: {self.de} HL: {self.hl} "
-        s += f"AF': {self.af_} BC': {self.bc_} DE': {self.de_} HL': {self.hl_}\n"
+        s  = f" AF: {self.af} BC: {self.bc} DE: {self.de} HL: {self.hl}"
+        s += f" AF': {self.af_} BC': {self.bc_} DE': {self.de_} HL': {self.hl_}\n"
         s += f" SP: {self.sp} PC: {self.pc} IX: {self.ix} IY: {self.iy} I: 0x{self.i:02X} R: 0x{self.r:02X}"
         return s
