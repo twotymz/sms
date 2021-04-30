@@ -1,6 +1,5 @@
 import os
 from dataclasses import dataclass
-import numpy as np
 
 
 @dataclass
@@ -11,7 +10,7 @@ class Header:
     product_code: int = 0
     version: int = 0
     region: int = 0
-    size: str = None
+    size: int = 0
 
 
 class Cartridge:
@@ -27,7 +26,7 @@ class Cartridge:
             if fs % 1024:
                 fp.seek(512)
                 fs -= 512
-            self._rom = np.fromfile(fp, dtype=np.uint8)
+            self._rom = bytearray(fp.read())
 
     def readHeader(self):
         """ Read and decode the header from the loaded rom.
@@ -39,8 +38,9 @@ class Cartridge:
         header.raw = ' '.join ([f'{r:02X}' for r in self._rom[0x7FF0:0x8000]])
         header.tmr_sega = ''.join ([chr(r) for r in self._rom[0x7FF0:0x7FF8]])
         header.checksum = self._rom[0x7FFA]
-        header.product_code = self._rom[0x7FFC] | (self._rom[0x7FFE] & 0xF0 >> 4) << 16
+        # TODO product code is wrong
+        header.product_code = (self._rom[0x7FFC] << 8 | self._rom[0x7FFD]) | ((self._rom[0x7FFE] & 0xF0) >> 4) << 16
         header.version = self._rom[0x7FFE] & 0xF
-        header.region = self._rom[0x7FFF] & 0xF0 >> 4
+        header.region = (self._rom[0x7FFF] & 0xF0) >> 4
         header.size = self._rom[0x7FFF] & 0xF
         return header

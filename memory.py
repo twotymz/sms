@@ -1,14 +1,12 @@
-import numpy as np
 
 class Memory:
 
     def __init__(self):
-        self._memory = np.zeros(0xFFFF, dtype=np.uint8)
+        self._memory = bytearray(0xFFFF)
         print(self._memory[0])
 
     def loadCart(self, cart):
-        np.put(self._memory, np.arange(0x3FFF), cart._rom)
-        print(self._memory[0])
+        self._memory[:0xC]
 
     def readByte(self, addr):
         return self._memory[addr]
