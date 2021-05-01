@@ -27,6 +27,7 @@ class PortMapper:
     def write(self, port, byte):
 
         if port in (0x7E, 0x7F):
+            breakpoint()
             # psg write
             return
         elif port >= 0x01 and port <= 0x3F and port % 2 == 1:
