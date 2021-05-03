@@ -1,48 +1,109 @@
-from dataclasses import dataclass
 
-
-@dataclass
 class Noise:
-    reg: int = 0        # 3 bits of noise info
+
+    def __init__(self, tone_2):
+        self._reg = 0        # 3-bit noise info
+        self._counter = 0    # 10-bit counter
+        self._tone_2 = tone_2
 
     def latched(self, data):
-        self.reg = self.reg & 0x7
+        self._reg = data & 0x7
 
     def write(self, data):
-        self.reg = self.reg & 0x7
+        self._reg = data & 0x7
+
+    def run(self):
+
+        if self._counter:
+            self._counter -= 1
+
+            if not self._counter:
+                two_bits = self._reg & 0x3
+                if two_bits == 0x0:
+                    self._counter = 0x10
+                elif two_bits == 0x1:
+                    self._counter = 0x20
+                elif two_bits == 0x2:
+                    self._counter = 0x40
+                elif two_bits == 0x3:
+                    self._counter = self._tone_2.counter
 
 
-@dataclass
 class Tone:
-    reg: int = 0        # 10 bit of tone info
+
+    def __init__(self):
+        self._counter = 0
+        self._output = 0
 
     def latched(self, data):
-        self.reg = data & 0xF
+        self._counter = data & 0xF
 
     def write(self, data):
-        self.reg = (self.reg | (data << 6)) & 0x3FF
+        self._counter = (self._counter | (data << 6)) & 0x3FF
+
+    def run(self):
+        if self._counter:
+            self._counter -= 1
+
+            if not self._counter:
+                self._counter = 0
+                self._output = not self._output
+
+    @property
+    def counter(self):
+        return self._counter
 
 
-@dataclass
 class Volume:
-    reg: int = 0xF      # 4 bits of attenuation, 0x0 = full, 0xF = silence
+
+    def __init__(self):
+        self._reg = 0xF      # 4-bits of attenuation, 0x0 = full, 0xF = silence
+
+    def latched(self, data):
+        self._reg = data & 0xF
 
     def write(self, data):
-        self.reg = data & 0xF
+        self._reg = data & 0xF
+
+
+class Channel:
+
+    def __init__(self, volume, tone_noise):
+        self._pair = (volume, tone_noise)
+
+    @property
+    def pair(self):
+        return self._pair
+
+    @property
+    def volume(self):
+        return self._pair[0]
+
+    @property
+    def tone_noise(self):
+        return self._pair[1]
 
 
 class PSG:
 
     def __init__(self):
 
+        tone_2 = Tone()
+
         self._channels = [
-            (Volume(), Tone()),
-            (Volume(), Tone()),
-            (Volume(), Tone()),
-            (Volume(), Noise())
+            Channel(Volume(), Tone()),
+            Channel(Volume(), Tone()),
+            Channel(Volume(), tone_2),
+            Channel(Volume(), Noise(tone_2))
         ]
 
-        self._latched = None
+        self._latched_register = None
+
+    def run(self):
+        self._channels[0].tone_noise.run()
+        self._channels[1].tone_noise.run()
+        self._channels[2].tone_noise.run()
+        self._channels[3].tone_noise.run()
 
     def write(self, byte):
         if byte & 0x7:
@@ -51,12 +112,13 @@ class PSG:
             type = (byte & 0x10) >> 4
             data = byte & 0xF
 
-            volume, tone = self._channels[channel]
             if type:
-                self._latched = volume
+                self._latched_register = self._channels[channel].volume
             else:
-                self._latched = tone
+                self._latched_register = self._channels[channel].tone_noise
 
-            self._latched.write(data)
+            self._latched_register.latched(data)
 
         else:
+            # Data byte
+            self._latched_register.write(data & 0x3F)

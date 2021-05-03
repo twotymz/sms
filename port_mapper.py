@@ -1,3 +1,5 @@
+""" My attempt at emulating the SMS port mapper. """
+
 
 class BadPort(Exception):
     def __init__(self, port, access):
@@ -27,8 +29,7 @@ class PortMapper:
     def write(self, port, byte):
 
         if port in (0x7E, 0x7F):
-            breakpoint()
-            # psg write
+            self._psg.write(byte)
             return
         elif port >= 0x01 and port <= 0x3F and port % 2 == 1:
             # io control port
