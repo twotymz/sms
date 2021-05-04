@@ -39,7 +39,7 @@ class Tone:
         self._counter = data & 0xF
 
     def write(self, data):
-        self._counter = (self._counter | (data << 6)) & 0x3FF
+        self._counter = (data << 4) | (self._counter & 0xF)
 
     def run(self):
         if self._counter:
@@ -106,19 +106,18 @@ class PSG:
         self._channels[3].tone_noise.run()
 
     def write(self, byte):
-        if byte & 0x7:
+        if byte & 0x80:
             # Latch/data byte
             channel = (byte & 0x60) >> 5
             type = (byte & 0x10) >> 4
-            data = byte & 0xF
 
             if type:
                 self._latched_register = self._channels[channel].volume
             else:
                 self._latched_register = self._channels[channel].tone_noise
 
-            self._latched_register.latched(data)
+            self._latched_register.latched(byte & 0xF)
 
         else:
             # Data byte
-            self._latched_register.write(data & 0x3F)
+            self._latched_register.write(byte & 0x3F)
