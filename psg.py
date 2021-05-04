@@ -12,12 +12,12 @@ class Noise:
     def write(self, data):
         self._reg = data & 0x7
 
-    def run(self):
+    def run(self, cycles):
 
         if self._counter:
-            self._counter -= 1
+            self._counter -= cycles
 
-            if not self._counter:
+            if self._counter <= 0:
                 two_bits = self._reg & 0x3
                 if two_bits == 0x0:
                     self._counter = 0x10
@@ -32,32 +32,34 @@ class Noise:
 class Tone:
 
     def __init__(self):
-        self._counter = 0
+        self._reg = 0       # 10-bit tone info
+        self._counter = 0   # 10-bit counter
         self._output = 0
 
     def latched(self, data):
-        self._counter = data & 0xF
+        self._reg = data & 0xF
 
     def write(self, data):
-        self._counter = (data << 4) | (self._counter & 0xF)
+        self._reg = ((data & 0x3F) << 4) | (self._reg & 0xF)
+        self._counter = self._reg
 
-    def run(self):
+    def run(self, cycles):
         if self._counter:
-            self._counter -= 1
+            self._counter -= cycles
 
-            if not self._counter:
-                self._counter = 0
+            if self._counter <= 0:
+                self._counter += self._reg
                 self._output = not self._output
-
-    @property
-    def counter(self):
-        return self._counter
 
 
 class Volume:
 
     def __init__(self):
         self._reg = 0xF      # 4-bits of attenuation, 0x0 = full, 0xF = silence
+
+    @property
+    def register(self):
+        return self._reg
 
     def latched(self, data):
         self._reg = data & 0xF
@@ -99,11 +101,14 @@ class PSG:
 
         self._latched_register = None
 
-    def run(self):
-        self._channels[0].tone_noise.run()
-        self._channels[1].tone_noise.run()
-        self._channels[2].tone_noise.run()
-        self._channels[3].tone_noise.run()
+    def get_channel(self, c):
+        return self._channels[c]
+
+    def run(self, cycles):
+        self._channels[0].tone_noise.run(cycles)
+        self._channels[1].tone_noise.run(cycles)
+        self._channels[2].tone_noise.run(cycles)
+        self._channels[3].tone_noise.run(cycles)
 
     def write(self, byte):
         if byte & 0x80:
